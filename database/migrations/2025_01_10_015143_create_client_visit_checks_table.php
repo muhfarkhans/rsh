@@ -19,7 +19,7 @@ return new class extends Migration {
             $table->integer('respiratory');
             $table->integer('weight');
             $table->integer('height');
-            $table->json('other');
+            $table->json('other')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });

@@ -141,29 +141,38 @@ class CreateVisit extends CreateRecord
                         ])
                     ]),
                     TextInput::make('name')
-                        ->label('Nama'),
+                        ->label('Nama')
+                        ->required(),
                     TextInput::make('phone')
                         ->numeric()
+                        ->required()
+                        ->default('62')
+                        ->regex('/^62[0-9]{9,15}$/')
                         ->label('No Telepon'),
                     DatePicker::make('birthdate')
-                        ->label('Tanggal Lahir'),
+                        ->label('Tanggal Lahir')
+                        ->required(),
                     Select::make('gender')
                         ->label('Jenis kelamin')
+                        ->required()
                         ->options([
                             'Laki-laki' => 'Laki-laki',
                             'Perempuan' => 'Perempuan',
                         ]),
                     TextInput::make('job')
                         ->label('Pekerjaan')
+                        ->required()
                         ->columnSpan(2),
                     Textarea::make('address')
                         ->label('Alamat')
+                        ->required()
                         ->columnSpan(2),
                 ])->columns(2),
             Step::make('Riwayat Penyakit')
                 ->schema([
                     MarkdownEditor::make('complaint')
                         ->label('Keluhan yang dirasakan')
+                        ->required()
                         ->columnSpan(2),
                     CheckboxList::make('medical_history')
                         ->label('Riwayat medis')
@@ -256,19 +265,31 @@ class CreateVisit extends CreateRecord
             Step::make('Pemeriksaan Fisik')
                 ->schema([
                     TextInput::make('temperature')
-                        ->label('Suhu'),
+                        ->label('Suhu')
+                        ->numeric()
+                        ->required(),
                     TextInput::make('blood_pressure')
                         ->label('Tekanan darah')
+                        ->required()
+                        ->numeric()
                         ->suffix('mm/Hg'),
                     TextInput::make('pulse')
-                        ->label('Nadi'),
+                        ->label('Nadi')
+                        ->numeric()
+                        ->required(),
                     TextInput::make('respiratory')
-                        ->label('Frekuensi nafas'),
+                        ->label('Frekuensi nafas')
+                        ->numeric()
+                        ->required(),
                     TextInput::make('weight')
                         ->label('Berat Badan')
+                        ->required()
+                        ->numeric()
                         ->suffix('Kg'),
                     TextInput::make('height')
                         ->label('Tinggi badan')
+                        ->required()
+                        ->numeric()
                         ->suffix('cm'),
                     MarkdownEditor::make('checks_other')
                         ->label('Pemeriksaan lainnya')
@@ -278,6 +299,7 @@ class CreateVisit extends CreateRecord
                 ->schema([
                     MarkdownEditor::make('diagnose')
                         ->label('Diagnosa')
+                        ->required()
                         ->columnSpan(2),
                 ]),
         ];
