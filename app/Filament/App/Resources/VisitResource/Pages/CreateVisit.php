@@ -35,20 +35,33 @@ class CreateVisit extends CreateRecord
 
     protected static string $resource = VisitResource::class;
 
+    protected function getRedirectUrl(): string
+    {
+        return static::getResource()::getUrl('view', [
+            'record' => $this->record
+        ]);
+    }
+
     protected function handleRecordCreation(array $data): \Illuminate\Database\Eloquent\Model
     {
         return DB::transaction(function () use ($data) {
             $totalClient = Client::count();
-            $dataClient = [
-                'reg_id' => str_pad($totalClient + 1, 5, 0, STR_PAD_LEFT),
-                'name' => $data['name'],
-                'phone' => $data['phone'],
-                'birthdate' => $data['birthdate'],
-                'gender' => $data['gender'],
-                'job' => $data['job'],
-                'address' => $data['address'],
-            ];
-            $createdClient = Client::create($dataClient);
+            $clientExists = Client::where('reg_id', $data['reg_id'])->first();
+
+            if ($clientExists != null) {
+                $dataClient = [
+                    'reg_id' => str_pad($totalClient + 1, 5, 0, STR_PAD_LEFT),
+                    'name' => $data['name'],
+                    'phone' => $data['phone'],
+                    'birthdate' => $data['birthdate'],
+                    'gender' => $data['gender'],
+                    'job' => $data['job'],
+                    'address' => $data['address'],
+                ];
+                $createdClient = Client::create($dataClient);
+            } else {
+                $createdClient = $clientExists;
+            }
 
             $dataClientVisit = [
                 'client_id' => $createdClient->id,
