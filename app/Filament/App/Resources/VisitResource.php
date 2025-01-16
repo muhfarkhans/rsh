@@ -11,6 +11,7 @@ use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
+use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -169,7 +170,7 @@ class VisitResource extends Resource
                             ->schema([
                                 TextEntry::make('complaint')
                                     ->label('Keluhan yang dirasakan')
-                                    ->extraAttributes(FilamentHelper::textEntryExtraAttributes())
+                                    ->weight(FontWeight::Bold)
                                     ->columnSpanFull(),
                                 TextEntry::make('medical_history')
                                     ->label('Riwayat medis')
@@ -285,7 +286,7 @@ class VisitResource extends Resource
                             ->schema([
                                 TextEntry::make('diagnose')
                                     ->label('')
-                                    ->extraAttributes(FilamentHelper::textEntryExtraAttributes())
+                                    ->weight(FontWeight::Bold)
                                     ->columnSpanFull(),
                             ])
                             ->columns(2)
