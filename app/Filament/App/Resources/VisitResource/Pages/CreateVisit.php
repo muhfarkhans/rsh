@@ -48,7 +48,7 @@ class CreateVisit extends CreateRecord
             $totalClient = Client::count();
             $clientExists = Client::where('reg_id', $data['reg_id'])->first();
 
-            if ($clientExists != null) {
+            if ($clientExists == null) {
                 $dataClient = [
                     'reg_id' => str_pad($totalClient + 1, 5, 0, STR_PAD_LEFT),
                     'name' => $data['name'],
