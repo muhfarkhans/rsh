@@ -152,12 +152,14 @@ class VisitResource extends Resource
                             ->schema([
                                 \Filament\Infolists\Components\Actions::make([
                                     Action::make('generateResetLink')
-                                        ->action(function (ClientVisit $record) {
-                                            Notification::make()
-                                                ->title('Not yet')
-                                                ->body("still working on it")
-                                                ->success()
-                                                ->send();
+                                        // ->url(CuppingResource::getUrl('create', ['visit' => ]))
+                                        // ->url(fn($record) => route('filament.app.resources.cuppings.create', ['visit' => $record->id]))
+                                        ->url(function (ClientVisit $record) {
+                                            if ($record->clientVisitCupping) {
+                                                return route('filament.app.resources.cuppings.edit', ['record' => $record->clientVisitCupping]);
+                                            } else {
+                                                return route('filament.app.resources.cuppings.create', ['visit' => $record->id]);
+                                            }
                                         })
                                         ->label('Tentukan titik bekam')
                                         ->color('success')

@@ -46,6 +46,11 @@ class ClientVisit extends Model
         return $this->belongsTo(ClientVisitCheck::class, 'id', 'client_visit_id', );
     }
 
+    public function clientVisitCupping(): BelongsTo
+    {
+        return $this->belongsTo(ClientVisitCupping::class, 'id', 'client_visit_id', );
+    }
+
     public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
