@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class ClientVisitCupping extends Model
 {
@@ -31,9 +32,9 @@ class ClientVisitCupping extends Model
         'points' => 'array',
     ];
 
-    public function clientVisit(): BelongsTo
+    public function clientVisit(): HasOne
     {
-        return $this->belongsTo(ClientVisit::class, 'client_visit_id');
+        return $this->hasOne(ClientVisit::class, 'id', 'client_visit_id');
     }
 
     public function therapist(): BelongsTo

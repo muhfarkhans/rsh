@@ -9,7 +9,10 @@ use App\Models\ClientVisit;
 use App\Models\ClientVisitCheck;
 use App\Models\ClientVisitCupping;
 use Filament\Actions;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Get;
 use Filament\Resources\Pages\CreateRecord;
 use Filament\Forms\Form;
 use Filament\Forms\Components\Grid;
@@ -19,6 +22,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\HtmlString;
 
 class CreateCupping extends CreateRecord
 {
@@ -114,38 +118,90 @@ class CreateCupping extends CreateRecord
     {
         return [
             Grid::make()->columns(2)->schema([
-                Section::make()->schema([
-                    Grid::make()->columns(2)->schema([
-                        Select::make('cupping_type')
-                            ->label('Jenis bekam')
+                Grid::make()->columns(1)->schema([
+                    Section::make()->schema([
+                        Grid::make()->columns(2)->schema([
+                            TextInput::make('name')
+                                ->label('Nama')
+                                ->default(fn() => dd($this->clientVisit->client->name))
+                                ->disabled(),
+                            TextInput::make('phone')
+                                ->numeric()
+                                ->default(fn() => $this->clientVisit->client->phone)
+                                ->disabled()
+                                ->label('No Telepon'),
+                            DatePicker::make('birthdate')
+                                ->label('Tanggal Lahir')
+                                ->default(fn() => $this->clientVisit->client->birthdate)
+                                ->disabled(),
+                            Select::make('gender')
+                                ->label('Jenis kelamin')
+                                ->default(fn() => $this->clientVisit->client->gender)
+                                ->disabled()
+                                ->options([
+                                    'Laki-laki' => 'Laki-laki',
+                                    'Perempuan' => 'Perempuan',
+                                ]),
+                            TextInput::make('job')
+                                ->label('Pekerjaan')
+                                ->default(fn() => $this->clientVisit->client->job)
+                                ->disabled()
+                                ->columnSpan(2),
+                            Textarea::make('address')
+                                ->label('Alamat')
+                                ->default(fn() => $this->clientVisit->client->address)
+                                ->disabled()
+                                ->columnSpan(2),
+                        ])
+                    ])->columnSpanFull(),
+                    Section::make()->schema([
+                        Grid::make()->columns(2)->schema([
+                            Select::make('cupping_type')
+                                ->label('Jenis bekam')
+                                ->required()
+                                ->options([
+                                    'Bekam basah' => 'Bekam basah',
+                                    'Bekam kering' => 'Bekam kering',
+                                    'Lainnya' => 'Lainnya',
+                                ])
+                                ->live()
+                                ->columnSpanFull(),
+                            TextInput::make('temperature')
+                                ->label('Suhu')
+                                ->default(fn() => $this->clientVisit->clientVisitCheck->temperature)
+                                ->required()
+                                ->numeric(),
+                            TextInput::make('blood_pressure')
+                                ->label('Tekanan darah')
+                                ->default(fn() => $this->clientVisit->clientVisitCheck->blood_pressure)
+                                ->required()
+                                ->numeric()
+                                ->suffix('mm/Hg'),
+                            TextInput::make('pulse')
+                                ->label('Nadi')
+                                ->default(fn() => $this->clientVisit->clientVisitCheck->pulse)
+                                ->required()
+                                ->numeric(),
+                            TextInput::make('respiratory')
+                                ->label('Frekuensi nafas')
+                                ->default(fn() => $this->clientVisit->clientVisitCheck->respiratory)
+                                ->required()
+                                ->numeric(),
+                        ])
+                    ])->columnSpanFull(),
+                ])->columnSpan(1),
+                Grid::make()->columns(1)->schema([
+                    Section::make()->schema([
+                        PointSkeleton::make('points')
+                            ->label('Titik bekam')
+                            ->imageUrl("/assets/images/skeleton.jpg")
+                            ->points([])
                             ->required()
-                            ->options([
-                                'Bekam basah' => 'Bekam basah',
-                                'Bekam kering' => 'Bekam kering',
-                                'Lainnya' => 'Lainnya',
-                            ])
                             ->columnSpanFull(),
-                        TextInput::make('temperature')
-                            ->label('Suhu')
-                            ->default(fn() => $this->clientVisit->clientVisitCheck->temperature)
-                            ->required()
-                            ->numeric(),
-                        TextInput::make('blood_pressure')
-                            ->label('Tekanan darah')
-                            ->default(fn() => $this->clientVisit->clientVisitCheck->blood_pressure)
-                            ->required()
-                            ->numeric()
-                            ->suffix('mm/Hg'),
-                        TextInput::make('pulse')
-                            ->label('Nadi')
-                            ->default(fn() => $this->clientVisit->clientVisitCheck->pulse)
-                            ->required()
-                            ->numeric(),
-                        TextInput::make('respiratory')
-                            ->label('Frekuensi nafas')
-                            ->default(fn() => $this->clientVisit->clientVisitCheck->respiratory)
-                            ->required()
-                            ->numeric(),
+                    ])->columnSpan(1)
+                ])->columnSpan(1),
+                Section::make()->schema([
+                    Grid::make()->columns(1)->schema([
                         MarkdownEditor::make('side_effect')
                             ->label('Efek samping')
                             ->required()
@@ -171,15 +227,48 @@ class CreateCupping extends CreateRecord
                             ->required()
                             ->columnSpanFull(),
                     ])
-                ])->columnSpan(1),
+                ])->columnSpanFull(),
                 Section::make()->schema([
-                    PointSkeleton::make('points')
-                        ->label('Titik bekam')
-                        ->imageUrl("/assets/images/skeleton.jpg")
-                        ->points([])
-                        ->required()
-                        ->columnSpanFull(),
-                ])->columnSpan(1)
+                    Grid::make()->columns(1)->schema([
+                        TextInput::make('relationship_client')
+                            ->label('Hubungan dengan pasien')
+                            ->required()
+                            ->live()
+                            ->columnSpanFull(),
+                    ])
+                ])->columnSpanFull(),
+                Section::make('Form Pernyataan')
+                    ->description('Form pernyataan pasien bekam')
+                    ->schema([
+                        Placeholder::make('toc')
+                            ->hiddenLabel()
+                            ->content(function (Get $get) {
+                                return new HtmlString(
+                                    '<p><strong>' . $this->clientVisit->client->name . '<sup>1</sup></strong> dengan ini setuju untuk mendapatkan terapi bekam <strong>' . $get('cupping_type') . '<sup>2</sup></strong> untuk <strong>' . $this->clientVisit->client->name . '<sup>3</sup></strong>(<strong>' . $get('relationship_client') . '<sup>4</sup></strong>) menyatakan bahwa : </p>
+                                    <ul style="margin-left: 20px; margin-top: 20px">
+                                        <li style="list-style-type: circle">Saya dengan sadar meminta untuk dilakukan Tindakan bekam.</li>
+                                        <li style="list-style-type: circle">Saya memahami prosedur tindakan bekam yang akan dilakukan serta efek sampingnya.</li>
+                                        <li style="list-style-type: circle">Informasi yang saya berikan kepada terapis bekam terkait keadaan kesehatan klien adalah benar adanya.</li>
+                                        <li style="list-style-type: circle">Saya menyetujui pelaksanaan bekam dari saudara/i <strong>' . $this->clientVisit->createdBy->name . '</strong> dengan kesadaran penuh tanpa paksaan dari pihak manapun.</li>
+                                    </ul>
+                                    '
+                                );
+                            }),
+                        Placeholder::make('toc-notes')
+                            ->hiddenLabel()
+                            ->content(function (Get $get) {
+                                return new HtmlString(
+                                    '
+                                    <div style="margin-left: 20px; margin-top: 20px">
+                                        <p>1. Nama wali</p>
+                                        <p>2. Jenis terapi bekam</p>
+                                        <p>3. Nama pasien</p>
+                                        <p>4. Hubungan dengan pasien</p>
+                                    </div>
+                                    '
+                                );
+                            }),
+                    ])
             ])
         ];
     }
