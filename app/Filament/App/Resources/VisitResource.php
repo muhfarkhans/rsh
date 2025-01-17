@@ -7,6 +7,7 @@ use App\Filament\App\Resources\VisitResource\RelationManagers;
 use App\Helpers\FilamentHelper;
 use App\Models\Client;
 use App\Models\ClientVisit;
+use Carbon\Carbon;
 use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Form;
@@ -310,11 +311,16 @@ class VisitResource extends Resource
                     ->label('Nama')
                     ->searchable()
                     ->sortable(),
-                TextColumn::make('updated_at')
+                TextColumn::make('created_at')
                     ->label('Tanggal kunjungan')
+                    ->formatStateUsing(function (string $state): string {
+                        $diff = Carbon::parse($state)->diffForHumans();
+                        return __("{$state} ({$diff})");
+                    })
                     ->searchable()
                     ->sortable(),
             ])
+            ->defaultSort('created_at', 'desc')
             ->filters([
                 //
             ])
