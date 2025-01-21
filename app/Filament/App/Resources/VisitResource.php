@@ -61,6 +61,10 @@ class VisitResource extends Resource
                     ->label('Nama')
                     ->searchable()
                     ->sortable(),
+                TextColumn::make('createdBy.name')
+                    ->label('Petugas')
+                    ->searchable()
+                    ->sortable(),
                 TextColumn::make('created_at')
                     ->label('Tanggal kunjungan')
                     ->formatStateUsing(function (string $state): string {
