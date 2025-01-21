@@ -123,7 +123,7 @@ class CreateCupping extends CreateRecord
                         Grid::make()->columns(2)->schema([
                             TextInput::make('name')
                                 ->label('Nama')
-                                ->default(fn() => dd($this->clientVisit->client->name))
+                                ->default(fn() => $this->clientVisit->client->name)
                                 ->disabled(),
                             TextInput::make('phone')
                                 ->numeric()

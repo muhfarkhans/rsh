@@ -39,6 +39,6 @@ class ClientVisitCupping extends Model
 
     public function therapist(): BelongsTo
     {
-        return $this->belongsTo(Client::class, 'therapy_id');
+        return $this->belongsTo(User::class, 'therapy_id');
     }
 }

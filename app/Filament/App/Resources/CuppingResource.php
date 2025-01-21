@@ -62,6 +62,7 @@ class CuppingResource extends Resource
             'index' => Pages\ListCuppings::route('/'),
             'create' => Pages\CreateCupping::route('/visits/{visit?}/create'),
             'edit' => Pages\EditCupping::route('/{record}/edit'),
+            'cupping-point' => Pages\CuppingPointVisit::route('/{record}/cupping-point'),
         ];
     }
 }

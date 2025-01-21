@@ -152,16 +152,31 @@ class ViewVisit extends ViewRecord
                                                 return 'Tentukan titik bekam';
                                             }
                                         })
-                                        ->color(function (ClientVisit $record) {
-                                            if ($record->clientVisitCupping != null) {
-                                                return 'info';
+                                        ->color('success')
+                                        ->icon('heroicon-m-map-pin')
+                                        ->iconPosition(IconPosition::After),
+                                ])->fullWidth(),
+                                \Filament\Infolists\Components\Actions::make([
+                                    Action::make('viewcuppingpoint')
+                                        ->url(function (ClientVisit $record) {
+                                            if ($record->clientVisitCupping) {
+                                                return route('filament.app.resources.cuppings.cupping-point', ['record' => $record->clientVisitCupping]);
                                             } else {
-                                                return 'success';
+                                                return '';
                                             }
                                         })
+                                        ->label('Lihat titik bekam')
+                                        ->color('info')
                                         ->icon('heroicon-m-map-pin')
                                         ->iconPosition(IconPosition::After)
-                                ])->fullWidth(),
+                                        ->hidden(function (ClientVisit $record) {
+                                            if ($record->clientVisitCupping == null) {
+                                                return true;
+                                            } else {
+                                                return false;
+                                            }
+                                        }),
+                                ])->fullWidth()
                             ])
                             ->columnSpan(1),
                         Section::make('Riwayat Penyakit')
