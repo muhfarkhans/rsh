@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Constants\TransactionStatus;
 use App\Filament\Resources\TransactionResource\Pages;
 use App\Filament\Resources\TransactionResource\RelationManagers;
 use App\Models\Transaction;
@@ -9,6 +10,7 @@ use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -17,7 +19,7 @@ class TransactionResource extends Resource
 {
     protected static ?string $model = Transaction::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-banknotes';
 
     public static function form(Form $form): Form
     {
@@ -31,7 +33,32 @@ class TransactionResource extends Resource
     {
         return $table
             ->columns([
-                //
+                TextColumn::make('invoice_id')
+                    ->label('Invoice')
+                    ->searchable()
+                    ->sortable(),
+                TextColumn::make('clientVisit.client.name')
+                    ->label('Client')
+                    ->searchable()
+                    ->sortable(),
+                TextColumn::make('status')
+                    ->label('Status')
+                    ->badge()
+                    ->color(function ($record) {
+                        return match ($record->status) {
+                            TransactionStatus::WAITING_FOR_PAYMENT => 'success',
+                            TransactionStatus::PAID => 'info',
+                            default => 'secondary',
+                        };
+                    })
+                    ->getStateUsing(function ($record) {
+                        return match ($record->status) {
+                            TransactionStatus::WAITING_FOR_PAYMENT => 'Menunggu pembayaran',
+                            TransactionStatus::PAID => 'Lunas',
+                            default => '-',
+                        };
+                    })
+                    ->sortable(),
             ])
             ->filters([
                 //

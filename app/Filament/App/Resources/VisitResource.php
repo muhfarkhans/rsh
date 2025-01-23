@@ -2,6 +2,7 @@
 
 namespace App\Filament\App\Resources;
 
+use App\Constants\VisitStatus;
 use App\Filament\App\Resources\VisitResource\Pages;
 use App\Filament\App\Resources\VisitResource\RelationManagers;
 use App\Helpers\FilamentHelper;
@@ -64,6 +65,28 @@ class VisitResource extends Resource
                 TextColumn::make('createdBy.name')
                     ->label('Petugas')
                     ->searchable()
+                    ->sortable(),
+                TextColumn::make('status')
+                    ->label('Status')
+                    ->badge()
+                    ->color(function ($record) {
+                        return match ($record->status) {
+                            VisitStatus::WAITING_FOR_SERVICE => 'warning',
+                            VisitStatus::ON_SERVICE => 'success',
+                            VisitStatus::WAITING_FOR_PAYMENT => 'success',
+                            VisitStatus::DONE => 'info',
+                            default => 'secondary',
+                        };
+                    })
+                    ->getStateUsing(function ($record) {
+                        return match ($record->status) {
+                            VisitStatus::WAITING_FOR_SERVICE => 'Menunggu layanan',
+                            VisitStatus::ON_SERVICE => 'Dilakukan pelayanan',
+                            VisitStatus::WAITING_FOR_PAYMENT => 'Menunggu pembayaran',
+                            VisitStatus::DONE => 'Selesai',
+                            default => '-',
+                        };
+                    })
                     ->sortable(),
                 TextColumn::make('created_at')
                     ->label('Tanggal kunjungan')

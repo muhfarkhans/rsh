@@ -24,6 +24,7 @@ class ClientVisit extends Model
         'nutrition',
         'spiritual',
         'diagnose',
+        'status',
     ];
 
     protected $casts = [

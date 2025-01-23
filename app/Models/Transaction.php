@@ -23,7 +23,7 @@ class Transaction extends Model
 
     public function clientVisit()
     {
-        return $this->hasOne(ClientVisit::class, 'id');
+        return $this->hasOne(ClientVisit::class, 'id', 'client_visit_id');
     }
 
     public function createdBy()

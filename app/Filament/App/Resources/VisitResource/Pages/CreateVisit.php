@@ -2,6 +2,7 @@
 
 namespace App\Filament\App\Resources\VisitResource\Pages;
 
+use App\Constants\VisitStatus;
 use App\Filament\App\Resources\VisitResource;
 use App\Models\Client;
 use App\Models\ClientVisit;
@@ -90,17 +91,9 @@ class CreateVisit extends CreateRecord
                     'type' => $data['spiritual_type'],
                 ],
                 'diagnose' => $data['diagnose'],
+                'status' => VisitStatus::WAITING_FOR_SERVICE,
             ];
             $createdClientVisit = ClientVisit::create($dataClientVisit);
-
-            // $dataTransaction = [
-            //     'client_visit_id' => $createdClientVisit->id,
-            //     'created_by' => Auth::user()->id,
-            //     'invoice_id' => "INV" . str_pad($totalClient + 1, 5, 0, STR_PAD_LEFT),
-            //     'amount' => 0,
-            //     'payment_method' ,
-            //     'status',
-            // ];
 
             $dataClientCheck = [
                 'client_visit_id' => $createdClientVisit->id,

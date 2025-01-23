@@ -4,6 +4,7 @@ namespace App\Filament\App\Resources\CuppingResource\Pages;
 
 use App\Constants\PaymentMethod;
 use App\Constants\TransactionStatus;
+use App\Constants\VisitStatus;
 use App\Filament\App\Resources\CuppingResource;
 use App\Filament\App\Resources\VisitResource;
 use App\Forms\Components\PointSkeleton;
@@ -110,6 +111,10 @@ class CreateCupping extends CreateRecord
                 'price' => $service->price,
             ];
             $createdTransactionItem = TransactionItem::create($dataTransactionItem);
+
+            ClientVisit::where('id', $this->visitId)->update([
+                'status' => VisitStatus::WAITING_FOR_PAYMENT
+            ]);
 
             return $createdCupping;
         });
