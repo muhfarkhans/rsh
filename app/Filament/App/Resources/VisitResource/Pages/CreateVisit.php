@@ -93,6 +93,15 @@ class CreateVisit extends CreateRecord
             ];
             $createdClientVisit = ClientVisit::create($dataClientVisit);
 
+            // $dataTransaction = [
+            //     'client_visit_id' => $createdClientVisit->id,
+            //     'created_by' => Auth::user()->id,
+            //     'invoice_id' => "INV" . str_pad($totalClient + 1, 5, 0, STR_PAD_LEFT),
+            //     'amount' => 0,
+            //     'payment_method' ,
+            //     'status',
+            // ];
+
             $dataClientCheck = [
                 'client_visit_id' => $createdClientVisit->id,
                 'temperature' => $data['temperature'],

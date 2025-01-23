@@ -5,17 +5,18 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class TransactionDiscount extends Model
+class TransactionItem extends Model
 {
     use SoftDeletes;
 
-    protected $table = 'transaction_discounts';
+    protected $table = 'transaction_items';
 
     protected $fillable = [
         'transaction_id',
-        'discount_id',
+        'service_id',
         'name',
-        'discount',
+        'qty',
+        'price',
     ];
 
     public function transaction()
@@ -23,8 +24,8 @@ class TransactionDiscount extends Model
         return $this->belongsTo(Transaction::class, 'transaction_id');
     }
 
-    public function discount()
+    public function service()
     {
-        return $this->belongsTo(Discount::class, 'discount_id');
+        return $this->belongsTo(Service::class, 'service_id');
     }
 }

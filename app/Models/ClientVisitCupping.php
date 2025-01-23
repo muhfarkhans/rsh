@@ -26,6 +26,7 @@ class ClientVisitCupping extends Model
         'analysis',
         'planning',
         'points',
+        'service_id',
     ];
 
     protected $casts = [

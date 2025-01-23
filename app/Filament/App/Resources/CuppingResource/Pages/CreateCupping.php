@@ -2,12 +2,17 @@
 
 namespace App\Filament\App\Resources\CuppingResource\Pages;
 
+use App\Constants\PaymentMethod;
+use App\Constants\TransactionStatus;
 use App\Filament\App\Resources\CuppingResource;
 use App\Filament\App\Resources\VisitResource;
 use App\Forms\Components\PointSkeleton;
 use App\Models\ClientVisit;
 use App\Models\ClientVisitCheck;
 use App\Models\ClientVisitCupping;
+use App\Models\Service;
+use App\Models\Transaction;
+use App\Models\TransactionItem;
 use Filament\Actions;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Placeholder;
@@ -62,7 +67,7 @@ class CreateCupping extends CreateRecord
             $dataCupping = [
                 'client_visit_id' => $this->visitId,
                 'therapy_id' => Auth::user()->id,
-                'cupping_type' => $data['cupping_type'],
+                'service_id' => $data['service_id'],
                 'temperature' => $data['temperature'],
                 'blood_pressure' => $data['blood_pressure'],
                 'pulse' => $data['pulse'],
@@ -84,6 +89,27 @@ class CreateCupping extends CreateRecord
                 'pulse' => $data['pulse'],
                 'respiratory' => $data['respiratory'],
             ]);
+
+            $totalTransaction = Transaction::count();
+            $service = Service::where('id', $data['service_id'])->first();
+            $dataTransaction = [
+                'client_visit_id' => $this->visitId,
+                'created_by' => Auth::user()->id,
+                'invoice_id' => "INV" . str_pad($totalTransaction + 1, 5, 0, STR_PAD_LEFT),
+                'amount' => $service->price,
+                'payment_method' => PaymentMethod::WAITING_FOR_PAYMENT,
+                'status' => TransactionStatus::WAITING_FOR_PAYMENT,
+            ];
+            $createdTransaction = Transaction::create($dataTransaction);
+
+            $dataTransactionItem = [
+                'transaction_id' => $createdTransaction->id,
+                'service_id' => $service->id,
+                'name' => $service->name,
+                'qty' => 1,
+                'price' => $service->price,
+            ];
+            $createdTransactionItem = TransactionItem::create($dataTransactionItem);
 
             return $createdCupping;
         });
@@ -156,15 +182,19 @@ class CreateCupping extends CreateRecord
                     ])->columnSpanFull(),
                     Section::make()->schema([
                         Grid::make()->columns(2)->schema([
-                            Select::make('cupping_type')
-                                ->label('Jenis bekam')
-                                ->required()
-                                ->options([
-                                    'Bekam basah' => 'Bekam basah',
-                                    'Bekam kering' => 'Bekam kering',
-                                    'Lainnya' => 'Lainnya',
-                                ])
+                            Select::make('service_id')
+                                ->label('Nama Layanan')
+                                ->options(function (): array {
+                                    return Service::get()
+                                        ->mapWithKeys(function ($service) {
+                                            return [$service->id => $service->name . ' - ' . $service->price];
+                                        })
+                                        ->toArray();
+                                })
                                 ->live()
+                                ->required()
+                                ->searchable()
+                                ->preload()
                                 ->columnSpanFull(),
                             TextInput::make('temperature')
                                 ->label('Suhu')

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Transaction extends Model
@@ -22,11 +23,16 @@ class Transaction extends Model
 
     public function clientVisit()
     {
-        return $this->belongsTo(ClientVisit::class, 'client_visit_id');
+        return $this->hasOne(ClientVisit::class, 'id');
     }
 
     public function createdBy()
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function items()
+    {
+        return $this->hasMany(TransactionItem::class, 'transaction_id');
     }
 }

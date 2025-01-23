@@ -2,10 +2,14 @@
 
 namespace App\Filament\App\Resources\CuppingResource\Pages;
 
+use App\Constants\TransactionStatus;
 use App\Filament\App\Resources\CuppingResource;
 use App\Models\ClientVisit;
 use App\Models\ClientVisitCheck;
 use App\Models\ClientVisitCupping;
+use App\Models\Service;
+use App\Models\Transaction;
+use App\Models\TransactionItem;
 use Filament\Actions;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Placeholder;
@@ -27,8 +31,7 @@ class EditCupping extends EditRecord
 {
     public function __construct()
     {
-        $id = $this->getVisitIdFromUrl();
-        $this->clientVisit = ClientVisit::with(['client'])->where('id', $id)->first();
+        //
     }
 
     protected static string $resource = CuppingResource::class;
@@ -58,6 +61,22 @@ class EditCupping extends EditRecord
     protected function handleRecordUpdate(Model $record, array $data): Model
     {
         return DB::transaction(function () use ($data, $record) {
+            if ($data['service_id'] != $record->service_id) {
+                $service = Service::where('id', $data['service_id'])->first();
+                $transaction = Transaction::where('id', $record->client_visit_id)->first();
+                Transaction::where('id', $record->client_visit_id)->update(['amount' => $service->price]);
+                TransactionItem::where('transaction_id', $transaction->id)->delete();
+
+                $dataTransactionItem = [
+                    'transaction_id' => $transaction->id,
+                    'service_id' => $service->id,
+                    'name' => $service->name,
+                    'qty' => 1,
+                    'price' => $service->price,
+                ];
+                $createdTransactionItem = TransactionItem::create($dataTransactionItem);
+            }
+
             $record->update($data);
 
             ClientVisitCheck::where('client_visit_id', $this->visitId)->update([
@@ -104,6 +123,12 @@ class EditCupping extends EditRecord
 
     protected function mutateFormDataBeforeFill(array $data): array
     {
+        $this->clientVisit = ClientVisit::with(['client'])
+            ->whereHas('clientVisitCupping', function ($query) use ($data) {
+                return $query->where('id', $data['id']);
+            })
+            ->first();
+
         $data['name'] = $this->clientVisit->client->name;
         $data['phone'] = $this->clientVisit->client->phone;
         $data['birthdate'] = $this->clientVisit->client->birthdate;
@@ -117,6 +142,9 @@ class EditCupping extends EditRecord
     protected function getFormSchema(): array
     {
         return [
+            TextInput::make('id')
+                ->readOnly()
+                ->hidden(),
             Grid::make()->columns(2)->schema([
                 Grid::make()->columns(1)->schema([
                     Section::make()->schema([
@@ -150,15 +178,24 @@ class EditCupping extends EditRecord
                     ])->columnSpanFull(),
                     Section::make()->schema([
                         Grid::make()->columns(2)->schema([
-                            Select::make('cupping_type')
-                                ->label('Jenis bekam')
-                                ->required()
-                                ->options([
-                                    'Bekam basah' => 'Bekam basah',
-                                    'Bekam kering' => 'Bekam kering',
-                                    'Lainnya' => 'Lainnya',
-                                ])
+                            Select::make('service_id')
+                                ->label('Nama Layanan')
+                                ->options(function (): array {
+                                    return Service::get()
+                                        ->mapWithKeys(function ($service) {
+                                            return [$service->id => $service->name . ' - ' . $service->price];
+                                        })
+                                        ->toArray();
+                                })
                                 ->live()
+                                ->required()
+                                ->searchable()
+                                ->preload()
+                                ->disableOptionWhen(function (string $value, Model $record) {
+                                    $transaction = optional($record->clientVisit)->transaction;
+
+                                    return $transaction && $transaction->status === TransactionStatus::PAID;
+                                })
                                 ->columnSpanFull(),
                             TextInput::make('temperature')
                                 ->label('Suhu')

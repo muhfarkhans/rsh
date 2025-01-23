@@ -10,12 +10,13 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create('transaction_discounts', function (Blueprint $table) {
+        Schema::create('transaction_items', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('transaction_id');
-            $table->unsignedBigInteger('discount_id');
+            $table->unsignedBigInteger('service_id');
             $table->string('name');
-            $table->integer('discount');
+            $table->integer('qty');
+            $table->integer('price');
             $table->timestamps();
             $table->softDeletes();
         });
@@ -26,6 +27,6 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::dropIfExists('transaction_discounts');
+        Schema::dropIfExists('transaction_items');
     }
 };
