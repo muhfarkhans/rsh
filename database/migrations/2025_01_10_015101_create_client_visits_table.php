@@ -14,6 +14,7 @@ return new class extends Migration {
             $table->id();
             $table->unsignedBigInteger('client_id');
             $table->unsignedBigInteger('created_by');
+            $table->unsignedBigInteger('therapy_id');
             $table->string('complaint');
             $table->json('medical_history')->nullable();
             $table->json('family_medical_history')->nullable();

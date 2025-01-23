@@ -3,6 +3,7 @@
 namespace App\Filament\App\Resources\CuppingResource\Pages;
 
 use App\Constants\PaymentMethod;
+use App\Constants\Role;
 use App\Constants\TransactionStatus;
 use App\Constants\VisitStatus;
 use App\Filament\App\Resources\CuppingResource;
@@ -14,6 +15,7 @@ use App\Models\ClientVisitCupping;
 use App\Models\Service;
 use App\Models\Transaction;
 use App\Models\TransactionItem;
+use App\Models\User;
 use Filament\Actions;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Placeholder;
@@ -67,7 +69,7 @@ class CreateCupping extends CreateRecord
         return DB::transaction(function () use ($data) {
             $dataCupping = [
                 'client_visit_id' => $this->visitId,
-                'therapy_id' => Auth::user()->id,
+                'therapy_id' => $data['therapy_id'],
                 'service_id' => $data['service_id'],
                 'temperature' => $data['temperature'],
                 'blood_pressure' => $data['blood_pressure'],
@@ -84,12 +86,24 @@ class CreateCupping extends CreateRecord
             ];
             $createdCupping = ClientVisitCupping::create($dataCupping);
 
-            ClientVisitCheck::where('client_visit_id', $this->visitId)->update([
+            // ClientVisitCheck::where('client_visit_id', $this->visitId)->update([
+            //     'temperature' => $data['temperature'],
+            //     'blood_pressure' => $data['blood_pressure'],
+            //     'pulse' => $data['pulse'],
+            //     'respiratory' => $data['respiratory'],
+            // ]);
+
+            $dataClientCheck = [
+                'client_visit_id' => $this->visitId,
                 'temperature' => $data['temperature'],
                 'blood_pressure' => $data['blood_pressure'],
                 'pulse' => $data['pulse'],
                 'respiratory' => $data['respiratory'],
-            ]);
+                'weight' => $data['weight'],
+                'height' => $data['height'],
+                'other' => $data['checks_other'],
+            ];
+            $createdClientCheck = ClientVisitCheck::create($dataClientCheck);
 
             $totalTransaction = Transaction::count();
             $service = Service::where('id', $data['service_id'])->first();
@@ -201,27 +215,57 @@ class CreateCupping extends CreateRecord
                                 ->searchable()
                                 ->preload()
                                 ->columnSpanFull(),
+                            Select::make('therapy_id')
+                                ->label('Nama Terapis')
+                                ->options(function () {
+                                    return User::with(['roles'])->whereHas('roles', function ($query) {
+                                        return $query->where('name', Role::THERAPIST);
+                                    })->get()->pluck('name', 'id');
+                                })
+                                ->default(4)
+                                ->live()
+                                ->required()
+                                ->searchable()
+                                ->preload()
+                                ->disabled(fn() => $this->clientVisit ? $this->clientVisit->therapy_id : 0)
+                                ->columnSpanFull(),
                             TextInput::make('temperature')
                                 ->label('Suhu')
-                                ->default(fn() => $this->clientVisit->clientVisitCheck->temperature)
+                                ->default(fn() => $this->clientVisit->clientVisitCheck ? $this->clientVisit->clientVisitCheck->temperature : 0)
                                 ->required()
                                 ->numeric(),
                             TextInput::make('blood_pressure')
                                 ->label('Tekanan darah')
-                                ->default(fn() => $this->clientVisit->clientVisitCheck->blood_pressure)
+                                ->default(fn() => $this->clientVisit->clientVisitCheck ? $this->clientVisit->clientVisitCheck->blood_pressure : 0)
                                 ->required()
                                 ->numeric()
                                 ->suffix('mm/Hg'),
                             TextInput::make('pulse')
                                 ->label('Nadi')
-                                ->default(fn() => $this->clientVisit->clientVisitCheck->pulse)
+                                ->default(fn() => $this->clientVisit->clientVisitCheck ? $this->clientVisit->clientVisitCheck->pulse : 0)
                                 ->required()
                                 ->numeric(),
                             TextInput::make('respiratory')
                                 ->label('Frekuensi nafas')
-                                ->default(fn() => $this->clientVisit->clientVisitCheck->respiratory)
+                                ->default(fn() => $this->clientVisit->clientVisitCheck ? $this->clientVisit->clientVisitCheck->respiratory : 0)
                                 ->required()
                                 ->numeric(),
+                            TextInput::make('weight')
+                                ->label('Berat Badan')
+                                ->default(fn() => $this->clientVisit->clientVisitCheck ? $this->clientVisit->clientVisitCheck->weight : 0)
+                                ->required()
+                                ->numeric()
+                                ->suffix('Kg'),
+                            TextInput::make('height')
+                                ->label('Tinggi badan')
+                                ->default(fn() => $this->clientVisit->clientVisitCheck ? $this->clientVisit->clientVisitCheck->height : 0)
+                                ->required()
+                                ->numeric()
+                                ->suffix('cm'),
+                            MarkdownEditor::make('checks_other')
+                                ->label('Pemeriksaan lainnya')
+                                ->default(fn() => $this->clientVisit->clientVisitCheck ? $this->clientVisit->clientVisitCheck->check_other : 0)
+                                ->columnSpan(2),
                         ])
                     ])->columnSpanFull(),
                 ])->columnSpan(1),

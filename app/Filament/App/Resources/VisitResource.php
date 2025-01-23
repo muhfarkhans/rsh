@@ -2,12 +2,14 @@
 
 namespace App\Filament\App\Resources;
 
+use App\Constants\Role;
 use App\Constants\VisitStatus;
 use App\Filament\App\Resources\VisitResource\Pages;
 use App\Filament\App\Resources\VisitResource\RelationManagers;
 use App\Helpers\FilamentHelper;
 use App\Models\Client;
 use App\Models\ClientVisit;
+use Auth;
 use Carbon\Carbon;
 use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
@@ -109,7 +111,12 @@ class VisitResource extends Resource
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
-            ]);
+            ])
+            ->modifyQueryUsing(function (Builder $query) {
+                if (in_array(Role::THERAPIST, Auth::user()->getRoleNames()->toArray())) {
+                    $query->where('therapy_id', Auth::user()->id);
+                }
+            });
     }
 
     public static function getRelations(): array

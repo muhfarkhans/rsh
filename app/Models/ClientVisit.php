@@ -15,6 +15,7 @@ class ClientVisit extends Model
     protected $fillable = [
         'client_id',
         'created_by',
+        'therapy_id',
         'complaint',
         'medical_history',
         'family_medical_history',
@@ -42,6 +43,16 @@ class ClientVisit extends Model
         return $this->belongsTo(Client::class, 'client_id');
     }
 
+    public function therapy(): BelongsTo
+    {
+        return $this->belongsTo(Client::class, 'therapy_id');
+    }
+
+    public function createdBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
     public function clientVisitCheck(): BelongsTo
     {
         return $this->belongsTo(ClientVisitCheck::class, 'id', 'client_visit_id', );
@@ -52,10 +63,6 @@ class ClientVisit extends Model
         return $this->belongsTo(ClientVisitCupping::class, 'id', 'client_visit_id', );
     }
 
-    public function createdBy(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'created_by');
-    }
 
     public function transaction(): BelongsTo
     {

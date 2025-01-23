@@ -2,11 +2,13 @@
 
 namespace App\Filament\App\Resources\VisitResource\Pages;
 
+use App\Constants\Role;
 use App\Constants\VisitStatus;
 use App\Filament\App\Resources\VisitResource;
 use App\Models\Client;
 use App\Models\ClientVisit;
 use App\Models\ClientVisitCheck;
+use App\Models\User;
 use Filament\Actions;
 use Filament\Forms\Components\Actions\Action;
 use Filament\Forms\Components\CheckboxList;
@@ -67,6 +69,7 @@ class CreateVisit extends CreateRecord
             $dataClientVisit = [
                 'client_id' => $createdClient->id,
                 'created_by' => Auth::user()->id,
+                'therapy_id' => $data['therapy_id'],
                 'complaint' => $data['complaint'],
                 'medical_history' => $data['medical_history'],
                 'family_medical_history' => $data['family_medical_history'],
@@ -90,22 +93,22 @@ class CreateVisit extends CreateRecord
                     'name' => $data['spiritual_name'],
                     'type' => $data['spiritual_type'],
                 ],
-                'diagnose' => $data['diagnose'],
+                'diagnose' => "-",
                 'status' => VisitStatus::WAITING_FOR_SERVICE,
             ];
             $createdClientVisit = ClientVisit::create($dataClientVisit);
 
-            $dataClientCheck = [
-                'client_visit_id' => $createdClientVisit->id,
-                'temperature' => $data['temperature'],
-                'blood_pressure' => $data['blood_pressure'],
-                'pulse' => $data['pulse'],
-                'respiratory' => $data['respiratory'],
-                'weight' => $data['weight'],
-                'height' => $data['height'],
-                'other' => $data['checks_other'],
-            ];
-            $createdClientCheck = ClientVisitCheck::create($dataClientCheck);
+            // $dataClientCheck = [
+            //     'client_visit_id' => $createdClientVisit->id,
+            //     'temperature' => $data['temperature'],
+            //     'blood_pressure' => $data['blood_pressure'],
+            //     'pulse' => $data['pulse'],
+            //     'respiratory' => $data['respiratory'],
+            //     'weight' => $data['weight'],
+            //     'height' => $data['height'],
+            //     'other' => $data['checks_other'],
+            // ];
+            // $createdClientCheck = ClientVisitCheck::create($dataClientCheck);
 
             return $createdClientVisit;
         });
@@ -182,6 +185,18 @@ class CreateVisit extends CreateRecord
                         ->label('Alamat')
                         ->required()
                         ->columnSpan(2),
+                    Select::make('therapy_id')
+                        ->label('Nama Terapis')
+                        ->options(function () {
+                            return User::with(['roles'])->whereHas('roles', function ($query) {
+                                return $query->where('name', Role::THERAPIST);
+                            })->get()->pluck('name', 'id');
+                        })
+                        ->live()
+                        ->required()
+                        ->searchable()
+                        ->preload()
+                        ->columnSpanFull(),
                 ])->columns(2),
             Step::make('Riwayat Penyakit')
                 ->schema([
@@ -277,46 +292,46 @@ class CreateVisit extends CreateRecord
                             ]),
                     ])
                 ])->columns(2),
-            Step::make('Pemeriksaan Fisik')
-                ->schema([
-                    TextInput::make('temperature')
-                        ->label('Suhu')
-                        ->numeric()
-                        ->required(),
-                    TextInput::make('blood_pressure')
-                        ->label('Tekanan darah')
-                        ->required()
-                        ->numeric()
-                        ->suffix('mm/Hg'),
-                    TextInput::make('pulse')
-                        ->label('Nadi')
-                        ->numeric()
-                        ->required(),
-                    TextInput::make('respiratory')
-                        ->label('Frekuensi nafas')
-                        ->numeric()
-                        ->required(),
-                    TextInput::make('weight')
-                        ->label('Berat Badan')
-                        ->required()
-                        ->numeric()
-                        ->suffix('Kg'),
-                    TextInput::make('height')
-                        ->label('Tinggi badan')
-                        ->required()
-                        ->numeric()
-                        ->suffix('cm'),
-                    MarkdownEditor::make('checks_other')
-                        ->label('Pemeriksaan lainnya')
-                        ->columnSpan(2),
-                ])->columns(2),
-            Step::make('Diagnosa')
-                ->schema([
-                    MarkdownEditor::make('diagnose')
-                        ->label('Diagnosa')
-                        ->required()
-                        ->columnSpan(2),
-                ]),
+            // Step::make('Pemeriksaan Fisik')
+            //     ->schema([
+            //         TextInput::make('temperature')
+            //             ->label('Suhu')
+            //             ->numeric()
+            //             ->required(),
+            //         TextInput::make('blood_pressure')
+            //             ->label('Tekanan darah')
+            //             ->required()
+            //             ->numeric()
+            //             ->suffix('mm/Hg'),
+            //         TextInput::make('pulse')
+            //             ->label('Nadi')
+            //             ->numeric()
+            //             ->required(),
+            //         TextInput::make('respiratory')
+            //             ->label('Frekuensi nafas')
+            //             ->numeric()
+            //             ->required(),
+            //         TextInput::make('weight')
+            //             ->label('Berat Badan')
+            //             ->required()
+            //             ->numeric()
+            //             ->suffix('Kg'),
+            //         TextInput::make('height')
+            //             ->label('Tinggi badan')
+            //             ->required()
+            //             ->numeric()
+            //             ->suffix('cm'),
+            //         MarkdownEditor::make('checks_other')
+            //             ->label('Pemeriksaan lainnya')
+            //             ->columnSpan(2),
+            //     ])->columns(2),
+            // Step::make('Diagnosa')
+            //     ->schema([
+            //         MarkdownEditor::make('diagnose')
+            //             ->label('Diagnosa')
+            //             ->required()
+            //             ->columnSpan(2),
+            //     ]),
         ];
     }
 }

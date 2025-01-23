@@ -256,40 +256,40 @@ class ViewVisit extends ViewRecord
                             ->schema([
                                 TextEntry::make('temperature')
                                     ->label('Suhu')
-                                    ->getStateUsing(fn($record) => $record->clientVisitCheck->temperature)
+                                    ->getStateUsing(fn($record) => ($record->clientVisitCheck ? $record->clientVisitCheck->check_other : 0))
                                     ->extraAttributes(FilamentHelper::textEntryExtraAttributes())
                                     ->columnSpanFull(),
                                 TextEntry::make('blood_pressure')
                                     ->label('Tekanan darah')
                                     ->suffix('mm/Hg')
-                                    ->getStateUsing(fn($record) => $record->clientVisitCheck->blood_pressure)
+                                    ->getStateUsing(fn($record) => ($record->clientVisitCheck ? $record->clientVisitCheck->blood_pressure : 0))
                                     ->extraAttributes(FilamentHelper::textEntryExtraAttributes())
                                     ->columnSpanFull(),
                                 TextEntry::make('pulse')
                                     ->label('Nadi')
-                                    ->getStateUsing(fn($record) => $record->clientVisitCheck->pulse)
+                                    ->getStateUsing(fn($record) => ($record->clientVisitCheck ? $record->clientVisitCheck->pulse : 0))
                                     ->extraAttributes(FilamentHelper::textEntryExtraAttributes())
                                     ->columnSpanFull(),
                                 TextEntry::make('respiratory')
                                     ->label('Frekuensi nafas')
-                                    ->getStateUsing(fn($record) => $record->clientVisitCheck->respiratory)
+                                    ->getStateUsing(fn($record) => ($record->clientVisitCheck ? $record->clientVisitCheck->respiratory : 0))
                                     ->extraAttributes(FilamentHelper::textEntryExtraAttributes())
                                     ->columnSpanFull(),
                                 TextEntry::make('weight')
                                     ->label('Berat Badan')
                                     ->suffix('kg')
-                                    ->getStateUsing(fn($record) => $record->clientVisitCheck->weight)
+                                    ->getStateUsing(fn($record) => ($record->clientVisitCheck ? $record->clientVisitCheck->weight : 0))
                                     ->extraAttributes(FilamentHelper::textEntryExtraAttributes())
                                     ->columnSpanFull(),
                                 TextEntry::make('height')
                                     ->label('Tinggi badan')
                                     ->suffix('cm')
-                                    ->getStateUsing(fn($record) => $record->clientVisitCheck->height)
+                                    ->getStateUsing(fn($record) => ($record->clientVisitCheck ? $record->clientVisitCheck->height : 0))
                                     ->extraAttributes(FilamentHelper::textEntryExtraAttributes())
                                     ->columnSpanFull(),
                                 TextEntry::make('check_other')
                                     ->label('Pemeriksaan lainnya')
-                                    ->getStateUsing(fn($record) => ($record->clientVisitCheck->check_other ? $record->clientVisitCheck->check_other : "-"))
+                                    ->getStateUsing(fn($record) => ($record->clientVisitCheck ? $record->clientVisitCheck->check_other : "-"))
                                     ->extraAttributes(FilamentHelper::textEntryExtraAttributes())
                                     ->columnSpanFull(),
                             ])

@@ -84,6 +84,9 @@ class EditCupping extends EditRecord
                 'blood_pressure' => $data['blood_pressure'],
                 'pulse' => $data['pulse'],
                 'respiratory' => $data['respiratory'],
+                'weight' => $data['weight'],
+                'height' => $data['height'],
+                'other_check' => $data['other_check'],
             ]);
 
             return $record;
@@ -218,6 +221,22 @@ class EditCupping extends EditRecord
                                 ->default(fn() => $this->clientVisit->clientVisitCheck->respiratory)
                                 ->required()
                                 ->numeric(),
+                            TextInput::make('weight')
+                                ->label('Berat Badan')
+                                ->default(fn() => $this->clientVisit->clientVisitCheck->weight)
+                                ->required()
+                                ->numeric()
+                                ->suffix('Kg'),
+                            TextInput::make('height')
+                                ->label('Tinggi badan')
+                                ->default(fn() => $this->clientVisit->clientVisitCheck->height)
+                                ->required()
+                                ->numeric()
+                                ->suffix('cm'),
+                            MarkdownEditor::make('checks_other')
+                                ->label('Pemeriksaan lainnya')
+                                ->default(fn() => $this->clientVisit->clientVisitCheck->check_other)
+                                ->columnSpan(2),
                         ])
                     ])->columnSpanFull(),
                 ])->columnSpan(1),
