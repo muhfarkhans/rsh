@@ -135,6 +135,7 @@ class EditCupping extends EditRecord
         $data['gender'] = $this->clientVisit->client->gender;
         $data['job'] = $this->clientVisit->client->job;
         $data['address'] = $this->clientVisit->client->address;
+        $data['relationship_client'] = 'Pasien';
 
         return $data;
     }

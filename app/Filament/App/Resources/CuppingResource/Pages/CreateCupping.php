@@ -262,6 +262,7 @@ class CreateCupping extends CreateRecord
                     Grid::make()->columns(1)->schema([
                         TextInput::make('relationship_client')
                             ->label('Hubungan dengan pasien')
+                            ->default('Pasien')
                             ->required()
                             ->live()
                             ->columnSpanFull(),
