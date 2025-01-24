@@ -40,7 +40,9 @@ class VisitResource extends Resource
 {
     protected static ?string $model = ClientVisit::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-c-users';
+
+    protected static ?string $label = 'Visit';
 
     protected static ?int $navigationSort = 1;
 
