@@ -16,11 +16,6 @@ class CreateUser extends CreateRecord
 {
     protected static string $resource = UserResource::class;
 
-    public function getHeading(): string
-    {
-        return 'Tambah User';
-    }
-
     public function form(Form $form): Form
     {
         return $form
