@@ -74,7 +74,7 @@ class AdminPanelProvider extends PanelProvider
                     ->icon('heroicon-m-user-circle'),
             ])
             ->navigationGroups([
-                'Users',
+                'User Management',
                 'Master Data',
                 'Filament Shield',
             ])

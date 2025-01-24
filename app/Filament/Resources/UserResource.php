@@ -30,23 +30,24 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Spatie\Permission\Models\Role;
+use App\Constants\Role as ConstRole;
 
 class UserResource extends Resource
 {
     protected static ?string $model = User::class;
 
-    protected static ?string $navigationLabel = 'User Management';
-
     protected static ?string $navigationIcon = 'heroicon-o-user-group';
 
-    protected static ?string $navigationGroup = 'Users';
+    protected static ?string $navigationGroup = 'User Management';
 
-    protected static ?string $label = 'User Management';
+    protected static ?string $label = 'Users';
 
     public static function form(Form $form): Form
     {
         return $form
-            ->schema(self::getFormSchema());
+            ->schema([
+                //
+            ]);
     }
 
     public static function table(Table $table): Table
@@ -54,11 +55,17 @@ class UserResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('name')
-                    ->label('Name')
+                    ->label('Nama')
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('roles.name')
                     ->label('Roles')
+                    ->badge()
+                    ->color(fn(string $state): string => match ($state) {
+                        ConstRole::SUPER_ADMIN => 'success',
+                        ConstRole::CASHIER => 'info',
+                        ConstRole::THERAPIST => 'warning',
+                    })
                     ->formatStateUsing(fn($state) => str($state)->headline())
                     ->searchable()
                     ->sortable(),
@@ -188,6 +195,8 @@ class UserResource extends Resource
     {
         return [
             'index' => Pages\ListUsers::route('/'),
+            'create' => Pages\CreateUser::route('/create'),
+            'edit' => Pages\EditUser::route('/{record}/edit'),
             'view' => Pages\ViewUser::route('/{record}'),
         ];
     }
@@ -200,70 +209,70 @@ class UserResource extends Resource
             ]);
     }
 
-    private static function getFormSchema(): array
-    {
-        return [
-            Forms\Components\Select::make('roles')
-                ->relationship('roles', 'name')
-                ->getOptionLabelFromRecordUsing(fn(Role $record) => str($record->name)->headline())
-                ->preload()
-                ->reactive()
-                ->required()
-                ->columns(1),
-            Forms\Components\TextInput::make('name')
-                ->label('Nama Lengkap User')
-                ->placeholder('isi nama lengkap')
-                ->required()
-                ->columns(1),
-            Forms\Components\TextInput::make('phone')
-                ->label('Enter No. Telepon / HP')
-                ->placeholder('62******')
-                ->unique('users', 'phone', null, true)
-                ->required()
-                ->regex('/^62[0-9]{9,15}$/')
-                ->columns(1),
-            Forms\Components\TextInput::make('email')
-                ->label('Email')
-                ->unique('users', 'email', null, true)
-                ->placeholder('Email@domain.com')
-                ->email()
-                ->required()
-                ->columns(1),
-            Forms\Components\TextInput::make('password')
-                ->label('Password')
-                ->placeholder('isi password')
-                ->password()
-                ->required()
-                ->hidden(function (Get $get, string $operation) {
-                    if ($operation === 'edit')
-                        return true;
-                })
-                ->disabled(function (Get $get, string $operation) {
-                    if ($operation === 'edit')
-                        return true;
-                })
-                ->columns(1),
-            Forms\Components\TextInput::make('password_confirmation')
-                ->label('Konfirmasi Password')
-                ->placeholder('konfirmasi password')
-                ->same('password')
-                ->required()
-                ->hidden(function (Get $get, string $operation) {
-                    if ($operation === 'edit')
-                        return true;
-                })
-                ->disabled(function (Get $get, string $operation) {
-                    if ($operation === 'edit')
-                        return true;
-                })
-                ->password()
-                ->dehydrated(false)
-                ->columns(1),
-            Forms\Components\Textarea::make('address')
-                ->label('Alamat')
-                ->placeholder("Alamat lengkap")
-                ->required()
-                ->columnSpanFull(),
-        ];
-    }
+    // private static function getFormSchema(): array
+    // {
+    //     return [
+    //         Forms\Components\Select::make('roles')
+    //             ->relationship('roles', 'name')
+    //             ->getOptionLabelFromRecordUsing(fn(Role $record) => str($record->name)->headline())
+    //             ->preload()
+    //             ->reactive()
+    //             ->required()
+    //             ->columns(1),
+    //         Forms\Components\TextInput::make('name')
+    //             ->label('Nama Lengkap User')
+    //             ->placeholder('isi nama lengkap')
+    //             ->required()
+    //             ->columns(1),
+    //         Forms\Components\TextInput::make('phone')
+    //             ->label('Enter No. Telepon / HP')
+    //             ->placeholder('62******')
+    //             ->unique('users', 'phone', null, true)
+    //             ->required()
+    //             ->regex('/^62[0-9]{9,15}$/')
+    //             ->columns(1),
+    //         Forms\Components\TextInput::make('email')
+    //             ->label('Email')
+    //             ->unique('users', 'email', null, true)
+    //             ->placeholder('Email@domain.com')
+    //             ->email()
+    //             ->required()
+    //             ->columns(1),
+    //         Forms\Components\TextInput::make('password')
+    //             ->label('Password')
+    //             ->placeholder('isi password')
+    //             ->password()
+    //             ->required()
+    //             ->hidden(function (Get $get, string $operation) {
+    //                 if ($operation === 'edit')
+    //                     return true;
+    //             })
+    //             ->disabled(function (Get $get, string $operation) {
+    //                 if ($operation === 'edit')
+    //                     return true;
+    //             })
+    //             ->columns(1),
+    //         Forms\Components\TextInput::make('password_confirmation')
+    //             ->label('Konfirmasi Password')
+    //             ->placeholder('konfirmasi password')
+    //             ->same('password')
+    //             ->required()
+    //             ->hidden(function (Get $get, string $operation) {
+    //                 if ($operation === 'edit')
+    //                     return true;
+    //             })
+    //             ->disabled(function (Get $get, string $operation) {
+    //                 if ($operation === 'edit')
+    //                     return true;
+    //             })
+    //             ->password()
+    //             ->dehydrated(false)
+    //             ->columns(1),
+    //         Forms\Components\Textarea::make('address')
+    //             ->label('Alamat')
+    //             ->placeholder("Alamat lengkap")
+    //             ->required()
+    //             ->columnSpanFull(),
+    //     ];
+    // }
 }
