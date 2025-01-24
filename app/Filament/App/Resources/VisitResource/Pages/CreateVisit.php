@@ -127,15 +127,15 @@ class CreateVisit extends CreateRecord
             $set('address', $client->address);
 
             Notification::make()
-                ->title('Client found')
+                ->title('Client ditemukan')
                 ->success()
-                ->body('Form is automatically filled.')
+                ->body('Form berhasil diisi otomatis.')
                 ->send();
         } catch (\Throwable $th) {
             Notification::make()
-                ->title('Client not found')
+                ->title('Client tidak ditemukan')
                 ->warning()
-                ->body('Please fill the form manual.')
+                ->body('Mohon isi form secara manual.')
                 ->send();
         }
 
