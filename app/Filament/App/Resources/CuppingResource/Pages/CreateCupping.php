@@ -222,7 +222,7 @@ class CreateCupping extends CreateRecord
                                         return $query->where('name', Role::THERAPIST);
                                     })->get()->pluck('name', 'id');
                                 })
-                                ->default(4)
+                                ->default(fn() => $this->clientVisit ? $this->clientVisit->therapy_id : 0)
                                 ->live()
                                 ->required()
                                 ->searchable()

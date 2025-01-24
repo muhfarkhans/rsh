@@ -2,10 +2,12 @@
 
 namespace App\Filament\App\Resources\VisitResource\Pages;
 
+use App\Constants\Role as ConstRole;
 use App\Filament\App\Resources\VisitResource;
 use App\Helpers\FilamentHelper;
 use App\Models\ClientVisit;
 use App\Models\Client;
+use App\Models\User;
 use Carbon\Carbon;
 use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
@@ -53,6 +55,7 @@ class ViewVisit extends ViewRecord
                                             'gender' => $record->client->gender,
                                             'job' => $record->client->job,
                                             'address' => $record->client->address,
+                                            'therapy_id' => $record->therapy_id,
                                         ];
                                     })
                                     ->form(function (Form $form) {
@@ -84,6 +87,18 @@ class ViewVisit extends ViewRecord
                                                 ->label('Alamat')
                                                 ->required()
                                                 ->columnSpan(2),
+                                            Select::make('therapy_id')
+                                                ->label('Nama Terapis')
+                                                ->options(function () {
+                                                    return User::with(['roles'])->whereHas('roles', function ($query) {
+                                                        return $query->where('name', ConstRole::THERAPIST);
+                                                    })->get()->pluck('name', 'id');
+                                                })
+                                                ->live()
+                                                ->required()
+                                                ->searchable()
+                                                ->preload()
+                                                ->columnSpanFull(),
                                         ])->columns(2);
                                     })
                                     ->action(function (ClientVisit $record, array $data) {
@@ -97,6 +112,9 @@ class ViewVisit extends ViewRecord
                                                     'job' => $data['job'],
                                                     'address' => $data['address'],
                                                 ]);
+
+                                                ClientVisit::where('id', $record->id)
+                                                    ->update(['therapy_id' => $data['therapy_id']]);
                                             }
                                         });
 
