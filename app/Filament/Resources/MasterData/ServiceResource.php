@@ -38,7 +38,7 @@ class ServiceResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('name')
-                    ->label('Name')
+                    ->label('Nama')
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('price')
@@ -47,11 +47,12 @@ class ServiceResource extends Resource
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('duration')
-                    ->label('Duration *minutes')
+                    ->label('Durasi (menit)')
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('commision')
-                    ->label('Commision')
+                    ->label('Komisi')
+                    ->formatStateUsing(fn(string $state): string => __(Helper::rupiah($state)))
                     ->searchable()
                     ->sortable(),
             ])
@@ -95,26 +96,26 @@ class ServiceResource extends Resource
     {
         return [
             TextInput::make('name')
-                ->label('Nama layanan')
+                ->label('Nama')
                 ->placeholder('Isi nama layanan')
                 ->required()
                 ->columnSpanFull(),
             TextInput::make('price')
-                ->label('Harga layanan')
+                ->label('Harga')
                 ->hint('Isi harga layanan')
                 ->required()
                 ->numeric()
                 ->prefix('Rp. ')
                 ->columns(1),
             TextInput::make('commision')
-                ->label('Komisi layanan')
+                ->label('Komisi')
                 ->hint('Isi jumlah komisi layanan')
                 ->required()
                 ->numeric()
                 ->prefix('Rp. ')
                 ->columns(1),
             TextInput::make('duration')
-                ->label('Durasi layanan')
+                ->label('Durasi')
                 ->hint('Isi durasi layanan dalam menit')
                 ->required()
                 ->numeric()
