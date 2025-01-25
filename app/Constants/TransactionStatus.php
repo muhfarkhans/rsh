@@ -14,10 +14,10 @@ class TransactionStatus
     {
         return [
             self::WAITING_FOR_PAYMENT => 'Waiting For Payment',
-            self::EXPIRED => 'Expired',
+                // self::EXPIRED => 'Expired',
             self::CANCEL => 'Cancel',
             self::PAID => 'Paid',
-            self::UNPAID => 'Unpaid',
+            // self::UNPAID => 'Unpaid',
         ];
     }
 

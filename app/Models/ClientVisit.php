@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ClientVisit extends Model
@@ -45,7 +46,7 @@ class ClientVisit extends Model
 
     public function therapy(): BelongsTo
     {
-        return $this->belongsTo(Client::class, 'therapy_id');
+        return $this->belongsTo(User::class, 'therapy_id');
     }
 
     public function createdBy(): BelongsTo
@@ -55,14 +56,18 @@ class ClientVisit extends Model
 
     public function clientVisitCheck(): BelongsTo
     {
-        return $this->belongsTo(ClientVisitCheck::class, 'id', 'client_visit_id', );
+        return $this->belongsTo(ClientVisitCheck::class, 'id', 'client_visit_id');
     }
 
     public function clientVisitCupping(): BelongsTo
     {
-        return $this->belongsTo(ClientVisitCupping::class, 'id', 'client_visit_id', );
+        return $this->belongsTo(ClientVisitCupping::class, 'id', 'client_visit_id');
     }
 
+    public function clientVisitServices(): HasMany
+    {
+        return $this->hasMany(ClientVisitService::class, 'client_visit_id', 'id');
+    }
 
     public function transaction(): BelongsTo
     {

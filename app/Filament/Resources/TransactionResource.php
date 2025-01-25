@@ -48,6 +48,7 @@ class TransactionResource extends Resource
                         return match ($record->status) {
                             TransactionStatus::WAITING_FOR_PAYMENT => 'success',
                             TransactionStatus::PAID => 'info',
+                            TransactionStatus::CANCEL => 'danger',
                             default => 'secondary',
                         };
                     })
@@ -55,6 +56,7 @@ class TransactionResource extends Resource
                         return match ($record->status) {
                             TransactionStatus::WAITING_FOR_PAYMENT => 'Menunggu pembayaran',
                             TransactionStatus::PAID => 'Lunas',
+                            TransactionStatus::CANCEL => 'Dibatalkan',
                             default => '-',
                         };
                     })

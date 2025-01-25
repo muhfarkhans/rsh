@@ -42,4 +42,9 @@ class ClientVisitCupping extends Model
     {
         return $this->belongsTo(User::class, 'therapy_id');
     }
+
+    public function service(): HasOne
+    {
+        return $this->hasOne(Service::class, 'id', 'service_id');
+    }
 }
