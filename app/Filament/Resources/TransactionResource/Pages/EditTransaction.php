@@ -152,6 +152,17 @@ class EditTransaction extends EditRecord
                         ->options(TransactionStatus::getLabels())
                         ->required()
                         ->columnSpanFull(),
+                    Placeholder::make('updated_at')
+                        ->hiddenLabel()
+                        ->hint(function ($state) {
+                            return new HtmlString(
+                                '
+                                <div style="text-align: right;">
+                                <p>Update terakhir </p>
+                                ' . $state . '
+                                </div>'
+                            );
+                        }),
                     \Filament\Forms\Components\Actions::make([
                         Action::make('Save')
                             ->action(fn($livewire) => $livewire->save())
