@@ -2,7 +2,10 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\App\Pages\Dashboard;
 use App\Filament\App\Pages\Login;
+use App\Livewire\LatestVisitors;
+use App\Livewire\StatsVisitor;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -36,13 +39,13 @@ class AppPanelProvider extends PanelProvider
             ->discoverResources(in: app_path('Filament/App/Resources'), for: 'App\\Filament\\App\\Resources')
             ->discoverPages(in: app_path('Filament/App/Pages'), for: 'App\\Filament\\App\\Pages')
             ->pages([
-                Pages\Dashboard::class,
+                Dashboard::class,
             ])
             ->discoverWidgets(in: app_path('Filament/App/Widgets'), for: 'App\\Filament\\App\\Widgets')
             ->login(Login::class)
             ->widgets([
-                Widgets\AccountWidget::class,
-                Widgets\FilamentInfoWidget::class,
+                StatsVisitor::class,
+                LatestVisitors::class,
             ])
             ->topNavigation()
             ->middleware([
