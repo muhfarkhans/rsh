@@ -84,6 +84,11 @@ class CreateCupping extends CreateRecord
                 'planning' => $data['planning'],
                 'points' => $data['points'],
             ];
+
+            if (in_array(Role::SUPER_ADMIN, Auth::user()->getRoleNames()->toArray())) {
+                $dataCupping['therapy_id'] = $data['therapy_id'];
+            }
+
             $createdCupping = ClientVisitCupping::create($dataCupping);
 
             // ClientVisitCheck::where('client_visit_id', $this->visitId)->update([
@@ -126,9 +131,15 @@ class CreateCupping extends CreateRecord
             ];
             $createdTransactionItem = TransactionItem::create($dataTransactionItem);
 
-            ClientVisit::where('id', $this->visitId)->update([
+            $dataClientVisit = [
                 'status' => VisitStatus::WAITING_FOR_PAYMENT
-            ]);
+            ];
+
+            if (in_array(Role::SUPER_ADMIN, Auth::user()->getRoleNames()->toArray())) {
+                $dataClientVisit['therapy_id'] = $data['therapy_id'];
+            }
+
+            ClientVisit::where('id', $this->visitId)->update($dataClientVisit);
 
             return $createdCupping;
         });
@@ -227,7 +238,13 @@ class CreateCupping extends CreateRecord
                                 ->required()
                                 ->searchable()
                                 ->preload()
-                                ->disabled(fn() => $this->clientVisit ? $this->clientVisit->therapy_id : 0)
+                                ->disabled(function () {
+                                    if (in_array(Role::SUPER_ADMIN, Auth::user()->getRoleNames()->toArray())) {
+                                        return false;
+                                    } else {
+                                        return true;
+                                    }
+                                })
                                 ->columnSpanFull(),
                             TextInput::make('temperature')
                                 ->label('Suhu')

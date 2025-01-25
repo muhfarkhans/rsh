@@ -12,6 +12,7 @@ use App\Models\Service;
 use App\Models\Transaction;
 use App\Models\TransactionItem;
 use App\Models\User;
+use Auth;
 use Filament\Actions;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Placeholder;
@@ -216,7 +217,15 @@ class EditCupping extends EditRecord
                                 ->required()
                                 ->searchable()
                                 ->preload()
-                                ->disabled()
+                                ->disableOptionWhen(function (string $value, Model $record) {
+                                    $transaction = optional($record->clientVisit)->transaction;
+
+                                    if (in_array(Role::SUPER_ADMIN, Auth::user()->getRoleNames()->toArray()) && $transaction->status != TransactionStatus::PAID) {
+                                        return false;
+                                    }
+
+                                    return $transaction && $transaction->status === TransactionStatus::PAID;
+                                })
                                 ->columnSpanFull(),
                             TextInput::make('temperature')
                                 ->label('Suhu')
