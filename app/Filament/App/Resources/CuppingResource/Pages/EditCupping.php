@@ -2,6 +2,7 @@
 
 namespace App\Filament\App\Resources\CuppingResource\Pages;
 
+use App\Constants\Role;
 use App\Constants\TransactionStatus;
 use App\Filament\App\Resources\CuppingResource;
 use App\Models\ClientVisit;
@@ -10,6 +11,7 @@ use App\Models\ClientVisitCupping;
 use App\Models\Service;
 use App\Models\Transaction;
 use App\Models\TransactionItem;
+use App\Models\User;
 use Filament\Actions;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Placeholder;
@@ -138,6 +140,7 @@ class EditCupping extends EditRecord
         $data['gender'] = $this->clientVisit->client->gender;
         $data['job'] = $this->clientVisit->client->job;
         $data['address'] = $this->clientVisit->client->address;
+        $data['therapy_id'] = $this->clientVisit->therapy_id;
         $data['relationship_client'] = 'Pasien';
 
         return $data;
@@ -200,6 +203,20 @@ class EditCupping extends EditRecord
 
                                     return $transaction && $transaction->status === TransactionStatus::PAID;
                                 })
+                                ->columnSpanFull(),
+                            Select::make('therapy_id')
+                                ->label('Nama Terapis')
+                                ->options(function () {
+                                    return User::with(['roles'])->whereHas('roles', function ($query) {
+                                        return $query->where('name', Role::THERAPIST);
+                                    })->get()->pluck('name', 'id');
+                                })
+                                ->default(fn() => $this->clientVisit ? $this->clientVisit->therapy_id : 0)
+                                ->live()
+                                ->required()
+                                ->searchable()
+                                ->preload()
+                                ->disabled()
                                 ->columnSpanFull(),
                             TextInput::make('temperature')
                                 ->label('Suhu')
