@@ -8,6 +8,7 @@ use App\Helpers\FilamentHelper;
 use App\Models\ClientVisit;
 use App\Models\Client;
 use App\Models\User;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
@@ -27,6 +28,8 @@ use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Infolist;
 use Filament\Support\Enums\FontWeight;
 use Filament\Support\Enums\IconPosition;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -70,7 +73,7 @@ class ViewVisit extends ViewRecord
                                                 ->regex('/^62[0-9]{9,15}$/')
                                                 ->label('No Telepon'),
                                             DatePicker::make('birthdate')
-                                                ->label('Tanggal Lahir')
+                                                ->label('Tahun Lahir')
                                                 ->required(),
                                             Select::make('gender')
                                                 ->label('Jenis kelamin')
@@ -194,7 +197,31 @@ class ViewVisit extends ViewRecord
                                                 return false;
                                             }
                                         }),
-                                ])->fullWidth()
+                                ])->fullWidth(),
+                                \Filament\Infolists\Components\Actions::make([
+                                    Action::make('viewcuppingpoint')
+                                        ->url(function (ClientVisit $record) {
+                                            return url('') . '/pdf/12';
+                                        })
+                                        ->label('Generate PDF')
+                                        ->color('info')
+                                        ->icon('heroicon-m-document-arrow-down')
+                                        ->iconPosition(IconPosition::After),
+                                ])->fullWidth(),
+                                // \Filament\Infolists\Components\Actions::make([
+                                //     Action::make('viewcuppingpoint')
+                                //         ->label('Generate PDF')
+                                //         ->color('info')
+                                //         ->icon('heroicon-m-document-arrow-down')
+                                //         ->iconPosition(IconPosition::After)
+                                //         ->action(function (Model $record) {
+                                //             return response()->streamDownload(function () use ($record) {
+                                //                 echo Pdf::loadHtml(
+                                //                     Blade::render('pdf', ['view' => $record])
+                                //                 )->stream();
+                                //             }, $record->id . '.pdf');
+                                //         })
+                                // ])->fullWidth()
                             ])
                             ->columnSpan(1),
                         Section::make('Riwayat Penyakit')
