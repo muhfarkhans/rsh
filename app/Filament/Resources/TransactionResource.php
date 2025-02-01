@@ -33,6 +33,9 @@ class TransactionResource extends Resource
     {
         return $table
             ->columns([
+                TextColumn::make('index')
+                    ->label('No.')
+                    ->rowIndex(),
                 TextColumn::make('invoice_id')
                     ->label('Invoice')
                     ->searchable()

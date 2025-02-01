@@ -19,6 +19,9 @@ class LatestVisitors extends BaseWidget
         return $table
             ->query(ClientVisit::query())
             ->columns([
+                TextColumn::make('index')
+                    ->label('No.')
+                    ->rowIndex(),
                 TextColumn::make('client.reg_id')
                     ->label('Registrasi Id')
                     ->searchable()

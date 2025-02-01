@@ -58,6 +58,9 @@ class VisitResource extends Resource
     {
         return $table
             ->columns([
+                TextColumn::make('index')
+                    ->label('No.')
+                    ->rowIndex(),
                 TextColumn::make('client.reg_id')
                     ->label('Registrasi Id')
                     ->searchable()
