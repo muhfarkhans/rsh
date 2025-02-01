@@ -72,6 +72,16 @@ class UserResource extends Resource
                     ->formatStateUsing(fn($state) => str($state)->headline())
                     ->searchable()
                     ->sortable(),
+                TextColumn::make('is_active')
+                    ->label('Status')
+                    ->badge()
+                    ->color(function ($record) {
+                        return $record->is_active == 1 ? 'success' : 'danger';
+                    })
+                    ->sortable()
+                    ->getStateUsing(function ($record) {
+                        return (bool) $record->is_active == 1 ? 'Aktif' : 'Tidak Aktif';
+                    }),
             ])
             ->filters([
                 Tables\Filters\TrashedFilter::make(),
@@ -108,34 +118,9 @@ class UserResource extends Resource
                                 Action::make('edit')
                                     ->label('Edit User')
                                     ->icon('heroicon-o-pencil')
-                                    ->fillForm(function (User $record) {
-                                        return [
-                                            'roles' => $record->roles->pluck('id')->toArray(),
-                                            'name' => $record->name,
-                                            'phone' => $record->phone,
-                                            'email' => $record->email,
-                                            'address' => $record->address,
-                                        ];
+                                    ->url(function (User $record) {
+                                        return UserResource::getUrl('edit', $record->id);
                                     })
-                                    ->form(function (Form $form) {
-                                        return $form->schema(self::getFormSchema())->columns(2);
-                                    })
-                                    ->action(function (User $record, array $data) {
-                                        DB::transaction(function () use ($record, $data) {
-                                            $record->update([
-                                                'name' => $data['name'],
-                                                'phone' => $data['phone'],
-                                                'email' => $data['email'],
-                                                'address' => $data['address'],
-                                            ]);
-                                            $record->roles()->sync($data['roles']);
-                                        });
-
-                                        Notification::make()
-                                            ->title('User updated successfully')
-                                            ->success()
-                                            ->send();
-                                    }),
                             ])
                             ->schema([
                                 TextEntry::make('name')

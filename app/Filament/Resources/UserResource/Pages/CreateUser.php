@@ -7,6 +7,7 @@ use Filament\Actions;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
 use Filament\Resources\Pages\CreateRecord;
@@ -86,6 +87,9 @@ class CreateUser extends CreateRecord
                 ->placeholder("Alamat lengkap")
                 ->required()
                 ->columnSpanFull(),
+            Toggle::make('is_active')
+                ->label('User Aktif?')
+                ->default(true)
         ];
     }
 }

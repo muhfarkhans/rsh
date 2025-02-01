@@ -7,6 +7,7 @@ use Filament\Actions;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
 use Filament\Resources\Pages\EditRecord;
@@ -25,7 +26,7 @@ class EditUser extends EditRecord
 
     public function getHeading(): string
     {
-        return 'Tambah User';
+        return 'Edit User';
     }
 
     public function form(Form $form): Form
@@ -98,6 +99,9 @@ class EditUser extends EditRecord
                 ->placeholder("Alamat lengkap")
                 ->required()
                 ->columnSpanFull(),
+            Toggle::make('is_active')
+                ->label('User Aktif?')
+                ->default(true)
         ];
     }
 }
