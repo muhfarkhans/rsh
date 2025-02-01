@@ -50,82 +50,9 @@ class ViewVisit extends ViewRecord
                                 Action::make('edit')
                                     ->label('Edit')
                                     ->icon('heroicon-o-pencil')
-                                    ->fillForm(function (ClientVisit $record) {
-                                        return [
-                                            'name' => $record->client->name,
-                                            'phone' => $record->client->phone,
-                                            'birthdate' => $record->client->birthdate,
-                                            'gender' => $record->client->gender,
-                                            'job' => $record->client->job,
-                                            'address' => $record->client->address,
-                                            'therapy_id' => $record->therapy_id,
-                                        ];
+                                    ->url(function (ClientVisit $record) {
+                                        return VisitResource::getUrl('edit', ['record' => $record]);
                                     })
-                                    ->form(function (Form $form) {
-                                        return $form->schema([
-                                            TextInput::make('name')
-                                                ->label('Nama')
-                                                ->required(),
-                                            TextInput::make('phone')
-                                                ->numeric()
-                                                ->required()
-                                                ->default('62')
-                                                ->regex('/^62[0-9]{9,15}$/')
-                                                ->label('No Telepon'),
-                                            DatePicker::make('birthdate')
-                                                ->label('Tahun Lahir')
-                                                ->required(),
-                                            Select::make('gender')
-                                                ->label('Jenis kelamin')
-                                                ->required()
-                                                ->options([
-                                                    'Laki-laki' => 'Laki-laki',
-                                                    'Perempuan' => 'Perempuan',
-                                                ]),
-                                            TextInput::make('job')
-                                                ->label('Pekerjaan')
-                                                ->required()
-                                                ->columnSpan(2),
-                                            Textarea::make('address')
-                                                ->label('Alamat')
-                                                ->required()
-                                                ->columnSpan(2),
-                                            Select::make('therapy_id')
-                                                ->label('Nama Terapis')
-                                                ->options(function () {
-                                                    return User::with(['roles'])->whereHas('roles', function ($query) {
-                                                        return $query->where('name', ConstRole::THERAPIST);
-                                                    })->get()->pluck('name', 'id');
-                                                })
-                                                ->live()
-                                                ->required()
-                                                ->searchable()
-                                                ->preload()
-                                                ->columnSpanFull(),
-                                        ])->columns(2);
-                                    })
-                                    ->action(function (ClientVisit $record, array $data) {
-                                        DB::transaction(function () use ($record, $data) {
-                                            if ($data) {
-                                                Client::where('id', $record->client_id)->update([
-                                                    'name' => $data['name'],
-                                                    'phone' => $data['phone'],
-                                                    'birthdate' => $data['birthdate'],
-                                                    'gender' => $data['gender'],
-                                                    'job' => $data['job'],
-                                                    'address' => $data['address'],
-                                                ]);
-
-                                                ClientVisit::where('id', $record->id)
-                                                    ->update(['therapy_id' => $data['therapy_id']]);
-                                            }
-                                        });
-
-                                        Notification::make()
-                                            ->title('Client updated successfully')
-                                            ->success()
-                                            ->send();
-                                    }),
                             ])
                             ->schema([
                                 TextEntry::make('client.name')
@@ -137,8 +64,9 @@ class ViewVisit extends ViewRecord
                                     ->extraAttributes(FilamentHelper::textEntryExtraAttributes())
                                     ->getStateUsing(fn($record) => filled($record->client->phone) ? $record->client->phone : 'N/A'),
                                 TextEntry::make('client.birthdate')
+                                    ->label('Tahun lahir')
                                     ->extraAttributes(FilamentHelper::textEntryExtraAttributes())
-                                    ->label('Tanggal lahir'),
+                                    ->getStateUsing(fn($record) => date('Y', strtotime($record->client->birthdate))),
                                 TextEntry::make('client.gender')
                                     ->extraAttributes(FilamentHelper::textEntryExtraAttributes())
                                     ->label('Jenis kelamin'),

@@ -9,6 +9,7 @@ use App\Models\Client;
 use App\Models\ClientVisit;
 use App\Models\ClientVisitCheck;
 use App\Models\User;
+use Carbon\Carbon;
 use Filament\Actions;
 use Filament\Forms\Components\Actions\Action;
 use Filament\Forms\Components\CheckboxList;
@@ -29,7 +30,7 @@ use Filament\Resources\Pages\Concerns\HasWizard;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
+use Illuminate\Database\Eloquent\Model;
 
 
 class CreateVisit extends CreateRecord
@@ -45,18 +46,19 @@ class CreateVisit extends CreateRecord
         ]);
     }
 
-    protected function handleRecordCreation(array $data): \Illuminate\Database\Eloquent\Model
+    protected function handleRecordCreation(array $data): Model
     {
         return DB::transaction(function () use ($data) {
             $totalClient = Client::count();
             $clientExists = Client::where('reg_id', $data['reg_id'])->first();
+            $startOfYear = Carbon::create($data['year'], 1, 1)->startOfYear();
 
             if ($clientExists == null) {
                 $dataClient = [
                     'reg_id' => str_pad($totalClient + 1, 5, 0, STR_PAD_LEFT),
                     'name' => $data['name'],
                     'phone' => $data['phone'],
-                    'birthdate' => $data['birthdate'],
+                    'birthdate' => $startOfYear,
                     'gender' => $data['gender'],
                     'job' => $data['job'],
                     'address' => $data['address'],
@@ -167,9 +169,11 @@ class CreateVisit extends CreateRecord
                         ->default('62')
                         ->regex('/^62[0-9]{9,15}$/')
                         ->label('No Telepon'),
-                    DatePicker::make('birthdate')
-                        ->label('Tanggal Lahir')
-                        ->required(),
+                    TextInput::make('year')
+                        ->label('Tahun Lahir')
+                        ->numeric()
+                        ->minValue(1960)
+                        ->maxValue(2025),
                     Select::make('gender')
                         ->label('Jenis kelamin')
                         ->required()
