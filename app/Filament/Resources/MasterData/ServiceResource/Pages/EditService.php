@@ -28,6 +28,15 @@ class EditService extends EditRecord
             ->schema(self::getFormSchema());
     }
 
+    protected function mutateFormDataBeforeFill(array $data): array
+    {
+        $price = (int) $data['price'];
+        $discount = ((int) $data['commision'] / 100) * $price;
+        $data['commision_amount'] = $discount;
+
+        return $data;
+    }
+
     public function getFormSchema(): array
     {
         return [
