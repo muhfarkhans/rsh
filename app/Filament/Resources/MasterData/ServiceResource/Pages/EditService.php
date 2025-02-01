@@ -4,6 +4,7 @@ namespace App\Filament\Resources\MasterData\ServiceResource\Pages;
 
 use App\Filament\Resources\MasterData\ServiceResource;
 use Filament\Actions;
+use Filament\Forms\Components\Toggle;
 use Filament\Resources\Pages\EditRecord;
 use Filament\Forms\Form;
 use Filament\Forms\Components\TextInput;
@@ -71,6 +72,9 @@ class EditService extends EditRecord
                 ->numeric()
                 ->prefix('Rp. ')
                 ->columns(1),
+            Toggle::make('is_cupping')
+                ->label('Apakah layanan bekam?')
+                ->default(false)
         ];
     }
 }

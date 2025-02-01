@@ -4,6 +4,7 @@ namespace App\Filament\Resources\MasterData\ServiceResource\Pages;
 
 use App\Filament\Resources\MasterData\ServiceResource;
 use Filament\Actions;
+use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\Pages\CreateRecord;
@@ -64,6 +65,9 @@ class CreateService extends CreateRecord
                 ->numeric()
                 ->prefix('Rp. ')
                 ->columns(1),
+            Toggle::make('is_cupping')
+                ->label('Apakah layanan bekam?')
+                ->default(false)
         ];
     }
 }

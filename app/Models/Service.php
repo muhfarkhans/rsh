@@ -16,5 +16,6 @@ class Service extends Model
         'price',
         'duration',
         'commision',
+        'is_cupping',
     ];
 }

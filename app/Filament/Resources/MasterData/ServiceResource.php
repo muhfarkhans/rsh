@@ -58,6 +58,16 @@ class ServiceResource extends Resource
                     ->formatStateUsing(fn(string $state): string => $state . " %")
                     ->searchable()
                     ->sortable(),
+                TextColumn::make('is_cupping')
+                    ->label('Bekam?')
+                    ->badge()
+                    ->color(function ($record) {
+                        return $record->is_cupping == 1 ? 'success' : 'warning';
+                    })
+                    ->sortable()
+                    ->getStateUsing(function ($record) {
+                        return (bool) $record->is_cupping == 1 ? 'Bekam' : 'Non-Bekam';
+                    }),
             ])
             ->filters([
                 Tables\Filters\TrashedFilter::make(),
