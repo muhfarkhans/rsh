@@ -54,8 +54,8 @@ class ServiceResource extends Resource
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('commision')
-                    ->label('Komisi')
-                    ->formatStateUsing(fn(string $state): string => __(Helper::rupiah($state)))
+                    ->label('Persentase Komisi')
+                    ->formatStateUsing(fn(string $state): string => $state . " %")
                     ->searchable()
                     ->sortable(),
             ])
@@ -84,6 +84,8 @@ class ServiceResource extends Resource
     {
         return [
             'index' => Pages\ListServices::route('/'),
+            'create' => Pages\CreateService::route('/create'),
+            'edit' => Pages\EditService::route('/{record}/edit'),
         ];
     }
 
