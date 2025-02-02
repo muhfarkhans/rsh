@@ -35,6 +35,8 @@ class EditServiceVisit extends EditRecord
 {
     protected static string $resource = VisitResource::class;
 
+    protected static ?string $title = 'Edit Visit Service';
+
     protected function getHeaderActions(): array
     {
         return [
