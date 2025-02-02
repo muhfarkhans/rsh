@@ -137,6 +137,7 @@ class VisitResource extends Resource
             'index' => Pages\ListVisits::route('/'),
             'create' => Pages\CreateVisit::route('/create'),
             'edit' => Pages\EditVisit::route('/{record}/edit'),
+            'edit-service' => Pages\EditServiceVisit::route('/{record}/edit-service'),
             'view' => Pages\ViewVisit::route('/{record}'),
         ];
     }

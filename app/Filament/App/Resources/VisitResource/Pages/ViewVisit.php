@@ -82,23 +82,19 @@ class ViewVisit extends ViewRecord
                             ])
                             ->columns(2)
                             ->columnSpan(2),
-                        Section::make('Titik bekam')
-                            ->description('Berikan tanda dimana akan dilakukan bekam')
+                        Section::make('Pilih layanan')
+                            ->description('Tentukan layanan yang diinginkan')
                             ->schema([
                                 \Filament\Infolists\Components\Actions::make([
                                     Action::make('cuppingpoint')
                                         ->url(function (ClientVisit $record) {
-                                            if ($record->clientVisitCupping) {
-                                                return route('filament.app.resources.cuppings.edit', ['record' => $record->clientVisitCupping]);
-                                            } else {
-                                                return route('filament.app.resources.cuppings.create', ['visit' => $record->id]);
-                                            }
+                                            return VisitResource::getUrl('edit-service', ['record' => $record]);
                                         })
                                         ->label(function (ClientVisit $record) {
                                             if ($record->clientVisitCupping != null) {
-                                                return 'Update titik bekam';
+                                                return 'Update Layanan';
                                             } else {
-                                                return 'Tentukan titik bekam';
+                                                return 'Pilih Layanan';
                                             }
                                         })
                                         ->color('success')
