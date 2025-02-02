@@ -1,6 +1,7 @@
 <x-dynamic-component :component="$getFieldWrapperView()" :field="$field">
     <div x-data="formInput">
         <div wire:ignore id="map" style="width: 100%; height: 650px; z-index: 1"></div>
+        <p>Titik bekam <span x-text="markers.length"></span> / 14</p>
     </div>
 
     @script
@@ -47,6 +48,11 @@
             },
 
             addMarker(latlng) {
+                if (this.markers.length >= 14) {
+                    alert('Titik bekam sudah maksimal');
+                    return
+                }
+
                 const marker = L.marker(latlng)
                     .addTo(this.map)
                     .on('click', () => this.removeMarker(marker));
