@@ -19,6 +19,7 @@ class Transaction extends Model
         'amount',
         'payment_method',
         'status',
+        'photo',
     ];
 
     public function clientVisit()

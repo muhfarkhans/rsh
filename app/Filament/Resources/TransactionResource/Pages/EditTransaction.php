@@ -8,6 +8,7 @@ use App\Filament\Resources\TransactionResource;
 use App\Models\Transaction;
 use Filament\Actions;
 use Filament\Forms\Components\Actions\Action;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Repeater;
@@ -15,6 +16,7 @@ use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Support\HtmlString;
 
@@ -60,16 +62,6 @@ class EditTransaction extends EditRecord
         $data['total'] = $items[0]['price'];
 
         return $data;
-    }
-
-    protected function mutateFormDataBeforeSave(array $data): array
-    {
-        $newData = [
-            'payment_method' => $data['payment_method'],
-            'status' => $data['status'],
-        ];
-
-        return $newData;
     }
 
     public function form(Form $form): Form
@@ -146,7 +138,28 @@ class EditTransaction extends EditRecord
                         ->label('Metode Pembayaran')
                         ->options(PaymentMethod::getLabels())
                         ->required()
+                        ->live()
                         ->columnSpanFull(),
+                    FileUpload::make('photo')
+                        ->directory('transactions')
+                        ->required(condition: function (Get $get) {
+                            $paymentMethod = $get('payment_method');
+
+                            if ($paymentMethod == PaymentMethod::QRIS) {
+                                return true;
+                            }
+
+                            return false;
+                        })
+                        ->hidden(condition: function (Get $get) {
+                            $paymentMethod = $get('payment_method');
+
+                            if ($paymentMethod == PaymentMethod::QRIS) {
+                                return false;
+                            }
+
+                            return true;
+                        }),
                     Select::make('status')
                         ->label('Status')
                         ->options(TransactionStatus::getLabels())
