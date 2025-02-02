@@ -220,6 +220,13 @@ class EditServiceVisit extends EditRecord
                                         ->toArray();
                                 })
                                 ->live()
+                                ->afterStateUpdated(function (?string $state) {
+                                    if ($state == "1") {
+                                        $this->hidePointSkeleton = true;
+                                    } else {
+                                        $this->hidePointSkeleton = false;
+                                    }
+                                })
                                 ->required()
                                 ->searchable()
                                 ->preload()
@@ -287,12 +294,36 @@ class EditServiceVisit extends EditRecord
                 Grid::make()->columns(1)->schema([
                     Section::make()->schema([
                         PointSkeleton::make('points')
-                            ->label('Titik bekam')
+                            ->label('Tentukan Titik Bekam')
                             ->imageUrl("/assets/images/skeleton.jpg")
                             ->points([])
+                            ->hidden(condition: function (Get $get) {
+                                $id = $get('service_id');
+                                $service = Service::where('id', $id)->first();
+
+                                if ($service->is_cupping == 1) {
+                                    return false;
+                                }
+
+                                return true;
+                            })
+                            ->columnSpanFull(),
+                        Placeholder::make('Pemberitahuan')
+                            ->content('Layanan yang anda pilih tidak termasuk terapi bekam')
+                            ->hidden(condition: function (Get $get) {
+                                $id = $get('service_id');
+                                $service = Service::where('id', $id)->first();
+
+                                if ($service->is_cupping == 1) {
+                                    return true;
+                                }
+
+                                return false;
+                            })
                             ->columnSpanFull(),
                     ])->columnSpan(1)
-                ])->columnSpan(1),
+                ])
+                    ->columnSpan(1),
                 Section::make()->schema([
                     Grid::make()->columns(1)->schema([
                         MarkdownEditor::make('side_effect')
