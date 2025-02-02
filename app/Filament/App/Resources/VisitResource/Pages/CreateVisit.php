@@ -16,6 +16,7 @@ use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\MarkdownEditor;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -38,6 +39,11 @@ class CreateVisit extends CreateRecord
     use HasWizard;
 
     protected static string $resource = VisitResource::class;
+
+    protected $clientVisitStats = [
+        'total' => 0,
+        'last_date' => '-',
+    ];
 
     protected function getRedirectUrl(): string
     {
@@ -100,18 +106,6 @@ class CreateVisit extends CreateRecord
             ];
             $createdClientVisit = ClientVisit::create($dataClientVisit);
 
-            // $dataClientCheck = [
-            //     'client_visit_id' => $createdClientVisit->id,
-            //     'temperature' => $data['temperature'],
-            //     'blood_pressure' => $data['blood_pressure'],
-            //     'pulse' => $data['pulse'],
-            //     'respiratory' => $data['respiratory'],
-            //     'weight' => $data['weight'],
-            //     'height' => $data['height'],
-            //     'other' => $data['checks_other'],
-            // ];
-            // $createdClientCheck = ClientVisitCheck::create($dataClientCheck);
-
             return $createdClientVisit;
         });
     }
@@ -127,6 +121,21 @@ class CreateVisit extends CreateRecord
             $set('gender', $client->gender);
             $set('job', $client->job);
             $set('address', $client->address);
+            $set('client_found', 1);
+
+            $clientVisit = ClientVisit::where('client_id', $client->id)->orderBy('created_at', 'desc')->get();
+
+            if (count($clientVisit) > 0) {
+                $this->clientVisitStats = [
+                    'total' => count($clientVisit),
+                    'last_date' => $clientVisit[0]->created_at,
+                ];
+            } else {
+                $this->clientVisitStats = [
+                    'total' => count($clientVisit),
+                    'last_date' => '-',
+                ];
+            }
 
             Notification::make()
                 ->title('Client ditemukan')
@@ -134,13 +143,18 @@ class CreateVisit extends CreateRecord
                 ->body('Form berhasil diisi otomatis.')
                 ->send();
         } catch (\Throwable $th) {
+            $set('client_found', 0);
+            $this->clientVisitStats = [
+                'total' => count($clientVisit),
+                'last_date' => '-',
+            ];
+
             Notification::make()
                 ->title('Client tidak ditemukan')
                 ->warning()
                 ->body('Mohon isi form secara manual.')
                 ->send();
         }
-
     }
 
     protected function getSteps(): array
@@ -158,8 +172,31 @@ class CreateVisit extends CreateRecord
                                 ->action(function (Get $get, Set $set) {
                                     $this->serachRegId($get('reg_id'), $set);
                                 })
-                        ])
+                        ]),
                     ]),
+                    Toggle::make('client_found')->hidden(),
+                    Section::make('Client Info')
+                        ->hidden(function (Get $get, Set $set) {
+                            if ($get('client_found') == 1) {
+                                return false;
+                            }
+
+                            return true;
+                        })
+                        ->schema([
+                            Placeholder::make('total_visit')
+                                ->label('Jumlah Kunjungan')
+                                ->content(function () {
+                                    return $this->clientVisitStats['total'] . " x";
+                                })
+                                ->columnSpanFull(),
+                            Placeholder::make('last_visit')
+                                ->label('Tanggal Kunjungan Terkahir')
+                                ->content(function () {
+                                    return $this->clientVisitStats['last_date'];
+                                })
+                                ->columnSpanFull(),
+                        ]),
                     TextInput::make('name')
                         ->label('Nama')
                         ->required(),
@@ -296,46 +333,6 @@ class CreateVisit extends CreateRecord
                             ]),
                     ])
                 ])->columns(2),
-            // Step::make('Pemeriksaan Fisik')
-            //     ->schema([
-            //         TextInput::make('temperature')
-            //             ->label('Suhu')
-            //             ->numeric()
-            //             ->required(),
-            //         TextInput::make('blood_pressure')
-            //             ->label('Tekanan darah')
-            //             ->required()
-            //             ->numeric()
-            //             ->suffix('mm/Hg'),
-            //         TextInput::make('pulse')
-            //             ->label('Nadi')
-            //             ->numeric()
-            //             ->required(),
-            //         TextInput::make('respiratory')
-            //             ->label('Frekuensi nafas')
-            //             ->numeric()
-            //             ->required(),
-            //         TextInput::make('weight')
-            //             ->label('Berat Badan')
-            //             ->required()
-            //             ->numeric()
-            //             ->suffix('Kg'),
-            //         TextInput::make('height')
-            //             ->label('Tinggi badan')
-            //             ->required()
-            //             ->numeric()
-            //             ->suffix('cm'),
-            //         MarkdownEditor::make('checks_other')
-            //             ->label('Pemeriksaan lainnya')
-            //             ->columnSpan(2),
-            //     ])->columns(2),
-            // Step::make('Diagnosa')
-            //     ->schema([
-            //         MarkdownEditor::make('diagnose')
-            //             ->label('Diagnosa')
-            //             ->required()
-            //             ->columnSpan(2),
-            //     ]),
         ];
     }
 }
