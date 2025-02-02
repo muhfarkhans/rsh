@@ -115,11 +115,11 @@ class ViewVisit extends ViewRecord
                                         ->icon('heroicon-m-map-pin')
                                         ->iconPosition(IconPosition::After)
                                         ->hidden(function (ClientVisit $record) {
-                                            if ($record->clientVisitCupping == null) {
+                                            if ($record->clientVisitCupping === null) {
                                                 return true;
-                                            } else {
-                                                return false;
                                             }
+
+                                            return $record->clientVisitCupping->service->is_cupping === 0;
                                         }),
                                 ])->fullWidth(),
                                 \Filament\Infolists\Components\Actions::make([
