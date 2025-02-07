@@ -11,7 +11,7 @@ class PaymentMethod
     public static function getLabels()
     {
         return [
-            self::WAITING_FOR_PAYMENT => 'Waiting For Payment',
+                // self::WAITING_FOR_PAYMENT => 'Waiting For Payment',
             self::CASH => 'Cash',
             self::QRIS => 'Qris',
         ];

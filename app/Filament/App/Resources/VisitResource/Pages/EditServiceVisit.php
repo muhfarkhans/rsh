@@ -103,7 +103,7 @@ class EditServiceVisit extends EditRecord
                 'objective' => $data['objective'],
                 'analysis' => $data['analysis'],
                 'planning' => $data['planning'],
-                'points' => $data['points'],
+                'points' => $data['points'] ?? null,
             ];
 
             if (in_array(Role::SUPER_ADMIN, Auth::user()->getRoleNames()->toArray())) {
@@ -159,7 +159,7 @@ class EditServiceVisit extends EditRecord
                 TransactionItem::create($dataTransactionItem);
 
                 $dataClientVisit = [
-                    'status' => VisitStatus::WAITING_FOR_PAYMENT
+                    'status' => VisitStatus::WAITING_FOR_SERVICE
                 ];
 
                 if (in_array(Role::SUPER_ADMIN, Auth::user()->getRoleNames()->toArray())) {
@@ -299,6 +299,11 @@ class EditServiceVisit extends EditRecord
                             ->points([])
                             ->hidden(condition: function (Get $get) {
                                 $id = $get('service_id');
+
+                                if ($id == null) {
+                                    return true;
+                                }
+
                                 $service = Service::where('id', $id)->first();
 
                                 if ($service->is_cupping == 1) {
@@ -308,10 +313,15 @@ class EditServiceVisit extends EditRecord
                                 return true;
                             })
                             ->columnSpanFull(),
-                        Placeholder::make('Pemberitahuan')
+                        Placeholder::make('Pemberitahuan!')
                             ->content('Layanan yang anda pilih tidak termasuk terapi bekam')
                             ->hidden(condition: function (Get $get) {
                                 $id = $get('service_id');
+
+                                if ($id == null) {
+                                    return true;
+                                }
+
                                 $service = Service::where('id', $id)->first();
 
                                 if ($service->is_cupping == 1) {
@@ -319,6 +329,18 @@ class EditServiceVisit extends EditRecord
                                 }
 
                                 return false;
+                            })
+                            ->columnSpanFull(),
+                        Placeholder::make('Pemberitahuan!')
+                            ->content('Layanan belum dipilih')
+                            ->hidden(condition: function (Get $get) {
+                                $id = $get('service_id');
+
+                                if ($id == null) {
+                                    return false;
+                                }
+
+                                return true;
                             })
                             ->columnSpanFull(),
                     ])->columnSpan(1)

@@ -3,6 +3,7 @@
 namespace App\Filament\App\Resources\VisitResource\Pages;
 
 use App\Constants\Role as ConstRole;
+use App\Constants\VisitStatus;
 use App\Filament\App\Resources\VisitResource;
 use App\Helpers\FilamentHelper;
 use App\Models\ClientVisit;
@@ -79,6 +80,28 @@ class ViewVisit extends ViewRecord
                                     ->columnSpanFull(),
                                 TextEntry::make('client.created_at')->label('Created at'),
                                 TextEntry::make('client.updated_at')->label('Last updated at'),
+                                TextEntry::make('status')
+                                    ->badge()
+                                    ->color(function ($record) {
+                                        return match ($record->status) {
+                                            VisitStatus::WAITING_FOR_CHECK => 'warning',
+                                            VisitStatus::WAITING_FOR_SERVICE => 'warning',
+                                            VisitStatus::ON_SERVICE => 'success',
+                                            VisitStatus::WAITING_FOR_PAYMENT => 'success',
+                                            VisitStatus::DONE => 'info',
+                                            default => 'secondary',
+                                        };
+                                    })
+                                    ->getStateUsing(function ($record) {
+                                        return match ($record->status) {
+                                            VisitStatus::WAITING_FOR_CHECK => 'Menunggu check up',
+                                            VisitStatus::WAITING_FOR_SERVICE => 'Menunggu layanan',
+                                            VisitStatus::ON_SERVICE => 'Dilakukan pelayanan',
+                                            VisitStatus::WAITING_FOR_PAYMENT => 'Menunggu pembayaran',
+                                            VisitStatus::DONE => 'Selesai',
+                                            default => $record->status,
+                                        };
+                                    })
                             ])
                             ->columns(2)
                             ->columnSpan(2),
@@ -94,12 +117,79 @@ class ViewVisit extends ViewRecord
                                             if ($record->clientVisitCupping != null) {
                                                 return 'Update Layanan';
                                             } else {
-                                                return 'Pilih Layanan';
+                                                return 'Check Up dan Pilih Layanan';
                                             }
                                         })
                                         ->color('success')
                                         ->icon('heroicon-m-map-pin')
-                                        ->iconPosition(IconPosition::After),
+                                        ->iconPosition(IconPosition::After)
+                                        ->hidden(function (ClientVisit $record) {
+                                            if ($record->clientVisitCupping != null) {
+                                                return 'Update Layanan';
+                                            } else {
+                                                return false;
+                                            }
+
+                                            return !($record->status == VisitStatus::WAITING_FOR_SERVICE);
+                                        })
+                                ])->fullWidth(),
+                                \Filament\Infolists\Components\Actions::make([
+                                    Action::make('viewcuppingpoint')
+                                        ->label('Mulai Layanan')
+                                        ->color('info')
+                                        ->iconPosition(IconPosition::After)
+                                        ->hidden(function (ClientVisit $record) {
+                                            if ($record->clientVisitCupping === null) {
+                                                return true;
+                                            }
+
+                                            return !($record->status == VisitStatus::WAITING_FOR_SERVICE);
+                                        })
+                                        ->action(function (ClientVisit $record, array $data) {
+                                            DB::transaction(function () use ($record, $data) {
+                                                ClientVisit::where('id', $record->id)
+                                                    ->update([
+                                                        'status' => VisitStatus::ON_SERVICE,
+                                                        'started_at' => now(),
+                                                    ]);
+                                            });
+
+                                            Notification::make()
+                                                ->title('Layanan dimulai')
+                                                ->success()
+                                                ->send();
+
+                                            $this->record->refresh();
+                                        }),
+                                ])->fullWidth(),
+                                \Filament\Infolists\Components\Actions::make([
+                                    Action::make('viewcuppingpoint')
+                                        ->label('Selesaikan Layanan')
+                                        ->color('danger')
+                                        ->iconPosition(IconPosition::After)
+                                        ->hidden(function (ClientVisit $record) {
+                                            if ($record->clientVisitCupping === null) {
+                                                return true;
+                                            }
+
+                                            return !($record->status == VisitStatus::ON_SERVICE);
+                                        })
+                                        ->action(function (ClientVisit $record, array $data) {
+                                            DB::transaction(function () use ($record, $data) {
+                                                ClientVisit::where('id', $record->id)
+                                                    ->update([
+                                                        'status' => VisitStatus::DONE,
+                                                        'ended_at' => now(),
+                                                    ]);
+                                            });
+
+                                            Notification::make()
+                                                ->title('Layanan selesai')
+                                                ->success()
+                                                ->send();
+
+                                            $this->record->refresh();
+                                        }),
                                 ])->fullWidth(),
                                 \Filament\Infolists\Components\Actions::make([
                                     Action::make('viewcuppingpoint')

@@ -78,6 +78,7 @@ class VisitResource extends Resource
                     ->badge()
                     ->color(function ($record) {
                         return match ($record->status) {
+                            VisitStatus::WAITING_FOR_CHECK => 'warning',
                             VisitStatus::WAITING_FOR_SERVICE => 'warning',
                             VisitStatus::ON_SERVICE => 'success',
                             VisitStatus::WAITING_FOR_PAYMENT => 'success',
@@ -87,6 +88,7 @@ class VisitResource extends Resource
                     })
                     ->getStateUsing(function ($record) {
                         return match ($record->status) {
+                            VisitStatus::WAITING_FOR_CHECK => 'Menunggu Check Up',
                             VisitStatus::WAITING_FOR_SERVICE => 'Menunggu layanan',
                             VisitStatus::ON_SERVICE => 'Dilakukan pelayanan',
                             VisitStatus::WAITING_FOR_PAYMENT => 'Menunggu pembayaran',

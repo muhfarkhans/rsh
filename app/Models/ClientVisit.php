@@ -27,6 +27,8 @@ class ClientVisit extends Model
         'spiritual',
         'diagnose',
         'status',
+        'started_at',
+        'ended_at',
     ];
 
     protected $casts = [

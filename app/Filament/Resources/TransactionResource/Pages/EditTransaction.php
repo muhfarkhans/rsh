@@ -178,7 +178,10 @@ class EditTransaction extends EditRecord
                         }),
                     \Filament\Forms\Components\Actions::make([
                         Action::make('Save')
-                            ->action(fn($livewire) => $livewire->save())
+                            ->action(function ($livewire) {
+                                $livewire->save();
+                                $this->record->refresh();
+                            })
                     ])->fullWidth(),
                 ])->columnSpan(1),
             ])

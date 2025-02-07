@@ -102,7 +102,7 @@ class CreateVisit extends CreateRecord
                     'type' => $data['spiritual_type'],
                 ],
                 'diagnose' => "-",
-                'status' => VisitStatus::WAITING_FOR_SERVICE,
+                'status' => VisitStatus::WAITING_FOR_CHECK,
             ];
             $createdClientVisit = ClientVisit::create($dataClientVisit);
 
