@@ -15,23 +15,13 @@ use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
-use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Enums\FiltersLayout;
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\Indicator;
 use Filament\Tables\Table;
 use Filament\Notifications\Notification;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\TimePicker;
-use Filament\Resources\Pages\ViewRecord;
-use Filament\Infolists\Components\Actions\Action;
-use Filament\Infolists\Components\Grid;
-use Filament\Infolists\Components\Section;
-use Filament\Infolists\Components\Split;
-use Filament\Infolists\Components\TextEntry;
-use Filament\Infolists\Infolist;
-use Filament\Support\Enums\IconPosition;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -78,6 +68,7 @@ class VisitResource extends Resource
                     ->badge()
                     ->color(function ($record) {
                         return match ($record->status) {
+                            VisitStatus::REGISTER => 'warning',
                             VisitStatus::WAITING_FOR_CHECK => 'warning',
                             VisitStatus::WAITING_FOR_SERVICE => 'warning',
                             VisitStatus::ON_SERVICE => 'success',
@@ -88,6 +79,7 @@ class VisitResource extends Resource
                     })
                     ->getStateUsing(function ($record) {
                         return match ($record->status) {
+                            VisitStatus::REGISTER => 'Pendaftaran',
                             VisitStatus::WAITING_FOR_CHECK => 'Menunggu Check Up',
                             VisitStatus::WAITING_FOR_SERVICE => 'Menunggu layanan',
                             VisitStatus::ON_SERVICE => 'Dilakukan pelayanan',
@@ -108,8 +100,37 @@ class VisitResource extends Resource
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([
-                //
-            ])
+                Filter::make('created_at')
+                    ->form([
+                        DatePicker::make('created_from'),
+                        DatePicker::make('created_until'),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when(
+                                $data['created_from'],
+                                fn(Builder $query, $date): Builder => $query->whereDate('created_at', '>=', $date),
+                            )
+                            ->when(
+                                $data['created_until'],
+                                fn(Builder $query, $date): Builder => $query->whereDate('created_at', '<=', $date),
+                            );
+                    })
+                    ->indicateUsing(function (array $data): array {
+                        $indicators = [];
+                        if ($data['created_from'] ?? null) {
+                            $indicators[] = Indicator::make('Created from ' . Carbon::parse($data['created_from'])->toFormattedDateString())
+                                ->removeField('created_from');
+                        }
+                        if ($data['created_until'] ?? null) {
+                            $indicators[] = Indicator::make('Created until ' . Carbon::parse($data['created_until'])->toFormattedDateString())
+                                ->removeField('created_until');
+                        }
+
+                        return $indicators;
+                    })
+                    ->columnSpan(2)->columns(2)
+            ], layout: FiltersLayout::AboveContent)->filtersFormColumns(2)
             ->actions([
                 // Tables\Actions\EditAction::make(),
                 Tables\Actions\ViewAction::make(),
