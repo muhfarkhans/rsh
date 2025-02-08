@@ -115,7 +115,7 @@ class ViewVisit extends ViewRecord
                                         })
                                         ->label(function (ClientVisit $record) {
                                             if ($record->clientVisitCupping != null) {
-                                                return 'Update Layanan';
+                                                return 'Lihat Layanan';
                                             } else {
                                                 return 'Check Up dan Pilih Layanan';
                                             }
@@ -123,15 +123,16 @@ class ViewVisit extends ViewRecord
                                         ->color('success')
                                         ->icon('heroicon-m-map-pin')
                                         ->iconPosition(IconPosition::After)
-                                        ->hidden(function (ClientVisit $record) {
-                                            if ($record->clientVisitCupping != null) {
-                                                return 'Update Layanan';
-                                            } else {
-                                                return false;
-                                            }
+                                    // ->hidden(function (ClientVisit $record) {
+                                    //     // if ($record->clientVisitCupping != null) {
+                                    //     //     return 'Update Layanan';
+                                    //     // } else {
+                                    //     //     return false;
+                                    //     // }
 
-                                            return !($record->status == VisitStatus::WAITING_FOR_SERVICE);
-                                        })
+                                    //     return false;
+                                    //     // return !($record->status == VisitStatus::WAITING_FOR_SERVICE);
+                                    // })
                                 ])->fullWidth(),
                                 \Filament\Infolists\Components\Actions::make([
                                     Action::make('viewcuppingpoint')

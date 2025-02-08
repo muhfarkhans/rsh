@@ -8,6 +8,7 @@ use App\Constants\TransactionStatus;
 use App\Constants\VisitStatus;
 use App\Filament\App\Resources\VisitResource;
 use App\Forms\Components\PointSkeleton;
+use App\Helpers\Helper;
 use App\Models\ClientVisit;
 use App\Models\ClientVisitCheck;
 use App\Models\ClientVisitCupping;
@@ -32,6 +33,9 @@ use Filament\Support\Colors\Color;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\HtmlString;
+use Saade\FilamentAutograph\Forms\Components\SignaturePad;
+use Storage;
+use Str;
 
 class EditServiceVisit extends EditRecord
 {
@@ -53,10 +57,28 @@ class EditServiceVisit extends EditRecord
         ];
     }
 
-    protected function getRedirectUrl(): ?string
+    protected function getFormActions(): array
     {
-        return static::getResource()::getUrl('index');
+        if (
+            in_array($this->record->status, [
+                VisitStatus::REGISTER,
+                VisitStatus::WAITING_FOR_CHECK,
+                VisitStatus::WAITING_FOR_SERVICE
+            ])
+        ) {
+            return [
+                $this->getSaveFormAction(),
+                $this->getCancelFormAction()
+            ];
+        } else {
+            return [];
+        }
     }
+
+    // protected function getRedirectUrl(): ?string
+    // {
+    //     return static::getResource()::getUrl('index');
+    // }
 
     public function form(Form $form): Form
     {
@@ -73,6 +95,9 @@ class EditServiceVisit extends EditRecord
         $data['client_job'] = $this->record->client->job;
         $data['client_address'] = $this->record->client->address;
         $data['client_relation_as'] = $this->record->relation_as;
+
+        $data['signature_therapist'] = Helper::getFileAsBase64($this->record->signature_therapist);
+        $data['signature_client'] = Helper::getFileAsBase64($this->record->signature_client);
 
         if ($this->record->clientVisitCupping != null) {
             $data['service_id'] = $this->record->clientVisitCupping->service_id;
@@ -101,7 +126,15 @@ class EditServiceVisit extends EditRecord
 
     protected function handleRecordUpdate(\Illuminate\Database\Eloquent\Model $record, array $data): \Illuminate\Database\Eloquent\Model
     {
-        return DB::transaction(function () use ($data, $record) {
+        $signatureTherapist = Helper::sanitizeBase64Image($data['signature_therapist']);
+        $signatureTherapistFilename = Str::uuid() . '.png';
+        Storage::disk('local')->put($signatureTherapistFilename, base64_decode($signatureTherapist));
+
+        $signatureClient = Helper::sanitizeBase64Image($data['signature_client']);
+        $signatureClientFilename = Str::uuid() . '.png';
+        Storage::disk('local')->put($signatureClientFilename, base64_decode($signatureClient));
+
+        return DB::transaction(function () use ($data, $record, $signatureTherapistFilename, $signatureClientFilename) {
             $dataCupping = [
                 'client_visit_id' => $record->id,
                 'therapy_id' => $data['therapy_id'],
@@ -165,6 +198,11 @@ class EditServiceVisit extends EditRecord
             $additionalCuppingPointPrice = $this->setting->additional_cupping_price * $additionalCupingPoint;
             $amount = $service->price + $additionalCuppingPointPrice;
 
+            $dataClientVisit = [
+                'signature_therapist' => $signatureTherapistFilename,
+                'signature_client' => $signatureClientFilename,
+                'relation_as' => $data['client_relation_as'],
+            ];
             $dataTransaction = [
                 'client_visit_id' => $record->id,
                 'created_by' => Auth::user()->id,
@@ -198,17 +236,17 @@ class EditServiceVisit extends EditRecord
                     TransactionItem::create($dataAdditionalTransactionItem);
                 }
 
-                $dataClientVisit = [
-                    'relation_as' => $data['client_relation_as'],
-                    'status' => VisitStatus::WAITING_FOR_SERVICE,
-                ];
+                $dataClientVisit['status'] = VisitStatus::WAITING_FOR_SERVICE;
 
                 if (in_array(Role::SUPER_ADMIN, Auth::user()->getRoleNames()->toArray())) {
                     $dataClientVisit['therapy_id'] = $data['therapy_id'];
                 }
-
-                ClientVisit::where('id', $record->id)->update($dataClientVisit);
             }
+
+            ClientVisit::where('id', $record->id)->update($dataClientVisit);
+
+            Helper::deleteFileStorage($this->record->signature_therapist);
+            Helper::deleteFileStorage($this->record->signature_client);
 
             return $record;
         });
@@ -523,7 +561,7 @@ class EditServiceVisit extends EditRecord
                             ->hiddenLabel()
                             ->content(function (Get $get) {
                                 return new HtmlString(
-                                    '<p><strong>' . $this->record->client->name . '<sup>1</sup></strong> dengan ini setuju untuk mendapatkan terapi bekam <strong>' . $get('cupping_type') . '<sup>2</sup></strong> untuk <strong>' . $this->record->client->name . '<sup>3</sup></strong>(<strong>' . $get('client_relation_as') . '<sup>4</sup></strong>) menyatakan bahwa : </p>
+                                    '<p><strong>' . $this->record->client->name . '<sup>1</sup></strong> dengan ini setuju untuk mendapatkan terapi bekam <strong>' . $get('service_id') . '<sup>2</sup></strong> untuk <strong>' . $this->record->client->name . '<sup>3</sup></strong>(<strong>' . $get('client_relation_as') . '<sup>4</sup></strong>) menyatakan bahwa : </p>
                                     <ul style="margin-left: 20px; margin-top: 20px">
                                         <li style="list-style-type: circle">Saya dengan sadar meminta untuk dilakukan Tindakan bekam.</li>
                                         <li style="list-style-type: circle">Saya memahami prosedur tindakan bekam yang akan dilakukan serta efek sampingnya.</li>
@@ -532,7 +570,15 @@ class EditServiceVisit extends EditRecord
                                     </ul>
                                     '
                                 );
-                            }),
+                            })->columnSpanFull(),
+                        SignaturePad::make('signature_therapist')
+                            ->label('TTE Terapis')
+                            ->required()
+                            ->columns(1),
+                        SignaturePad::make('signature_client')
+                            ->label('TTE Pasien')
+                            ->required()
+                            ->columns(1),
                         Placeholder::make('toc-notes')
                             ->hiddenLabel()
                             ->content(function (Get $get) {
@@ -546,8 +592,29 @@ class EditServiceVisit extends EditRecord
                                     </div>
                                     '
                                 );
-                            }),
-                    ])
+                            })->columnSpanFull(),
+                    ])->columns(2),
+                Section::make('Pemberitahuan')
+                    ->schema(
+                        [
+                            Placeholder::make('warning_1')
+                                ->hiddenLabel()
+                                ->content('Data tidak dapat diubah ketika layanan sudah dilakukan!')->columnSpanFull(),
+                        ]
+                    )
+                    ->hidden(function () {
+                        if (
+                            in_array($this->record->status, [
+                                VisitStatus::REGISTER,
+                                VisitStatus::WAITING_FOR_CHECK,
+                                VisitStatus::WAITING_FOR_SERVICE
+                            ])
+                        ) {
+                            return true;
+                        } else {
+                            return false;
+                        }
+                    })
             ])
         ];
     }
