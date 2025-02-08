@@ -59,8 +59,8 @@ class VisitResource extends Resource
                     ->label('Nama')
                     ->searchable()
                     ->sortable(),
-                TextColumn::make('createdBy.name')
-                    ->label('Petugas')
+                TextColumn::make('therapy.name')
+                    ->label('Terapis')
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('status')

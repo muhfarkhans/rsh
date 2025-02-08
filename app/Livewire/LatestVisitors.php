@@ -30,8 +30,8 @@ class LatestVisitors extends BaseWidget
                     ->label('Nama')
                     ->searchable()
                     ->sortable(),
-                TextColumn::make('createdBy.name')
-                    ->label('Petugas')
+                TextColumn::make('therapy.name')
+                    ->label('Terapis')
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('status')
@@ -39,6 +39,7 @@ class LatestVisitors extends BaseWidget
                     ->badge()
                     ->color(function ($record) {
                         return match ($record->status) {
+                            VisitStatus::REGISTER => 'warning',
                             VisitStatus::WAITING_FOR_CHECK => 'warning',
                             VisitStatus::WAITING_FOR_SERVICE => 'warning',
                             VisitStatus::ON_SERVICE => 'success',
@@ -49,6 +50,7 @@ class LatestVisitors extends BaseWidget
                     })
                     ->getStateUsing(function ($record) {
                         return match ($record->status) {
+                            VisitStatus::REGISTER => 'Pendaftaran',
                             VisitStatus::WAITING_FOR_CHECK => 'Menunggu check up',
                             VisitStatus::WAITING_FOR_SERVICE => 'Menunggu layanan',
                             VisitStatus::ON_SERVICE => 'Dilakukan pelayanan',
