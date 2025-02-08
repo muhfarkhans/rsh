@@ -29,6 +29,7 @@ class ClientVisit extends Model
         'status',
         'started_at',
         'ended_at',
+        'relation_as'
     ];
 
     protected $casts = [

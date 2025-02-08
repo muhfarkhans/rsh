@@ -72,7 +72,7 @@ class EditServiceVisit extends EditRecord
         $data['client_gender'] = $this->record->client->gender;
         $data['client_job'] = $this->record->client->job;
         $data['client_address'] = $this->record->client->address;
-        $data['relationship_client'] = 'Pasien';
+        $data['client_relation_as'] = $this->record->relation_as;
 
         if ($this->record->clientVisitCupping != null) {
             $data['service_id'] = $this->record->clientVisitCupping->service_id;
@@ -154,9 +154,11 @@ class EditServiceVisit extends EditRecord
             $service = Service::where('id', $data['service_id'])->first();
 
             $additionalCupingPoint = 0;
-            if (is_array($data['points'])) {
-                if (count($data['points']) > 14) {
-                    $additionalCupingPoint = count($data['points']) - 14;
+            if (isset($data['points'])) {
+                if (is_array($data['points'])) {
+                    if (count($data['points']) > 14) {
+                        $additionalCupingPoint = count($data['points']) - 14;
+                    }
                 }
             }
 
@@ -197,7 +199,8 @@ class EditServiceVisit extends EditRecord
                 }
 
                 $dataClientVisit = [
-                    'status' => VisitStatus::WAITING_FOR_SERVICE
+                    'relation_as' => $data['client_relation_as'],
+                    'status' => VisitStatus::WAITING_FOR_SERVICE,
                 ];
 
                 if (in_array(Role::SUPER_ADMIN, Auth::user()->getRoleNames()->toArray())) {
@@ -505,7 +508,7 @@ class EditServiceVisit extends EditRecord
                 ])->columnSpanFull(),
                 Section::make()->schema([
                     Grid::make()->columns(1)->schema([
-                        TextInput::make('relationship_client')
+                        TextInput::make('client_relation_as')
                             ->label('Hubungan dengan pasien')
                             ->default('Pasien')
                             ->required()
@@ -520,7 +523,7 @@ class EditServiceVisit extends EditRecord
                             ->hiddenLabel()
                             ->content(function (Get $get) {
                                 return new HtmlString(
-                                    '<p><strong>' . $this->record->client->name . '<sup>1</sup></strong> dengan ini setuju untuk mendapatkan terapi bekam <strong>' . $get('cupping_type') . '<sup>2</sup></strong> untuk <strong>' . $this->record->client->name . '<sup>3</sup></strong>(<strong>' . $get('relationship_client') . '<sup>4</sup></strong>) menyatakan bahwa : </p>
+                                    '<p><strong>' . $this->record->client->name . '<sup>1</sup></strong> dengan ini setuju untuk mendapatkan terapi bekam <strong>' . $get('cupping_type') . '<sup>2</sup></strong> untuk <strong>' . $this->record->client->name . '<sup>3</sup></strong>(<strong>' . $get('client_relation_as') . '<sup>4</sup></strong>) menyatakan bahwa : </p>
                                     <ul style="margin-left: 20px; margin-top: 20px">
                                         <li style="list-style-type: circle">Saya dengan sadar meminta untuk dilakukan Tindakan bekam.</li>
                                         <li style="list-style-type: circle">Saya memahami prosedur tindakan bekam yang akan dilakukan serta efek sampingnya.</li>
