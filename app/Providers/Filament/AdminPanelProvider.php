@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Resources\SettingResource;
 use App\Livewire\LatestVisitors;
 use App\Livewire\StatsVisitor;
 use Filament\Http\Middleware\Authenticate;
@@ -10,6 +11,7 @@ use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Navigation\MenuItem;
+use Filament\Navigation\NavigationItem;
 use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
@@ -74,6 +76,12 @@ class AdminPanelProvider extends PanelProvider
                     ->label('My Profile')
                     ->url(fn(): string => EditProfilePage::getUrl())
                     ->icon('heroicon-m-user-circle'),
+            ])
+            ->navigationItems([
+                NavigationItem::make('Settings')
+                    ->url(fn() => SettingResource::getUrl('edit', ['record' => 1]))
+                    ->icon('heroicon-o-cog')
+                    ->sort(10),
             ])
             ->navigationGroups([
                 'User Management',

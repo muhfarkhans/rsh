@@ -17,6 +17,7 @@ class TransactionItem extends Model
         'name',
         'qty',
         'price',
+        'is_additional',
     ];
 
     public function transaction()

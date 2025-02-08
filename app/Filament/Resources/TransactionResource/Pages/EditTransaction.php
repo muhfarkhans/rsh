@@ -4,6 +4,7 @@ namespace App\Filament\Resources\TransactionResource\Pages;
 
 use App\Constants\PaymentMethod;
 use App\Constants\TransactionStatus;
+use App\Constants\VisitStatus;
 use App\Filament\Resources\TransactionResource;
 use App\Models\Transaction;
 use Filament\Actions;
@@ -42,24 +43,65 @@ class EditTransaction extends EditRecord
 
     protected function mutateFormDataBeforeFill(array $data): array
     {
-        $this->transaction = Transaction::where('id', $data['id'])->first();
+        $client = $this->record->clientVisit->client;
+        $items = $this->record->items;
+        $clientServices = [];
+        $totalPriceService = 0;
+        $totalPriceAdditionalService = 0;
 
-        $client = $this->transaction->clientVisit->client;
-        $items = $this->transaction->items->toArray();
+        foreach ($items as $key => $item) {
+            if ($item->is_additional == 0) {
+                if (!isset($clientServices[$item->service_id])) {
+                    $clientServices[$item->service_id] = [
+                        'service_id' => $item->service_id,
+                        'service_name' => $item->name,
+                        'service_therapy' => $this->record->clientVisit->therapy->name,
+                        'service_price' => $item->price,
+                        'service_qty' => $item->qty,
+                        'additional' => [],
+                    ];
+                    $totalPriceService += $item->price;
+                } else if (count($clientServices[$item->service_id]) == 0) {
+                    $clientServices[$item->service_id]['service_id'] = $item->service_id;
+                    $clientServices[$item->service_id]['service_name'] = $item->name;
+                    $clientServices[$item->service_id]['service_therapy'] = $this->record->clientVisit->therapy->name;
+                    $clientServices[$item->service_id]['service_price'] = $item->price;
+                    $clientServices[$item->service_id]['service_qty'] = $item->qty;
+                    $totalPriceService += $item->price;
+                }
+            } else {
+                if (!isset($clientServices[$item->service_id])) {
+                    $clientServices[$item->service_id] = [];
+                }
+
+                $clientServices[$item->service_id]['additional'][] = [
+                    'service_id' => $item->service_id,
+                    'service_name' => $item->name,
+                    'service_therapy' => $this->record->clientVisit->therapy->name,
+                    'service_price' => $item->price,
+                    'service_qty' => $item->qty,
+                ];
+                $totalPriceAdditionalService += $item->price;
+            }
+        }
 
         $data['client_name'] = $client->name;
         $data['client_phone'] = $client->phone;
         $data['client_job'] = $client->job;
         $data['client_address'] = $client->address;
-        $data['client_visit_created_at'] = $this->transaction->clientVisit->created_at;
-        $data['client_services'] = [
-            [
-                'service_name' => $items[0]['name'],
-                'service_therapy' => $this->transaction->clientVisit->therapy->name,
-                'service_price' => $items[0]['price'],
-            ]
-        ];
-        $data['total'] = $items[0]['price'];
+        $data['client_visit_created_at'] = $this->record->clientVisit->created_at;
+        $data['client_services'] = $clientServices;
+        $data['total'] = $this->record->amount;
+        $data['total_services'] = $totalPriceService;
+        $data['total_additional'] = $totalPriceAdditionalService;
+
+        if ($data['payment_method'] == PaymentMethod::WAITING_FOR_PAYMENT) {
+            unset($data['payment_method']);
+        }
+
+        if ($data['status'] == PaymentMethod::WAITING_FOR_PAYMENT) {
+            unset($data['status']);
+        }
 
         return $data;
     }
@@ -116,6 +158,27 @@ class EditTransaction extends EditRecord
                                         ->label('Harga')
                                         ->readOnly()
                                         ->columnSpan(1),
+                                    Repeater::make('additional')
+                                        ->label('Tambahan')
+                                        ->schema([
+                                            TextInput::make('service_name')
+                                                ->label('Nama')
+                                                ->readOnly()
+                                                ->columnSpanFull(),
+                                            TextInput::make('service_qty')
+                                                ->label('Qty')
+                                                ->readOnly()
+                                                ->columnSpan(1),
+                                            TextInput::make('service_price')
+                                                ->label('Harga')
+                                                ->readOnly()
+                                                ->columnSpan(1),
+                                        ])
+                                        ->addable(false)
+                                        ->deletable(false)
+                                        ->reorderable(false)
+                                        ->columns(2)
+                                        ->columnSpanFull(),
                                 ])
                                 ->addable(false)
                                 ->deletable(false)
@@ -125,15 +188,39 @@ class EditTransaction extends EditRecord
                         ])->columnSpanFull(),
                     ])->columnSpan(2),
                 Section::make('Pembayaran')->schema([
-                    Placeholder::make('total')
-                        ->label('Total')
+                    Placeholder::make('total_services')
+                        ->label('Service')
+                        ->inlineLabel()
+                        ->extraAttributes(['style' => 'text-align: right;'])
                         ->content(function ($state) {
                             return new HtmlString(
                                 '
-                                <h1>Rp. ' . $state . '</h1>
+                                <h1>' . number_format($state, 0, ',', '.') . '</h1>
                                 '
                             );
-                        }),
+                        })->columnSpanFull(),
+                    Placeholder::make('total_additional')
+                        ->label('Tambahan')
+                        ->inlineLabel()
+                        ->extraAttributes(['style' => 'text-align: right;'])
+                        ->content(function ($state) {
+                            return new HtmlString(
+                                '
+                                <h1>' . number_format($state, 0, ',', '.') . '</h1>
+                                '
+                            );
+                        })->columnSpanFull(),
+                    Placeholder::make('total')
+                        ->label('Total')
+                        ->inlineLabel()
+                        ->extraAttributes(['style' => 'text-align:right;font-size:1.25em;font-weight:bold;'])
+                        ->content(function ($state) {
+                            return new HtmlString(
+                                '
+                                <h1>Rp. ' . number_format($state, 0, ',', '.') . '</h1>
+                                '
+                            );
+                        })->columnSpanFull(),
                     Select::make('payment_method')
                         ->label('Metode Pembayaran')
                         ->options(PaymentMethod::getLabels())
@@ -173,6 +260,7 @@ class EditTransaction extends EditRecord
                                 <div style="text-align: right;">
                                 <p>Update terakhir </p>
                                 ' . $state . '
+                                <p>*tombol save digunakan ketika layanan sudah diberikan</p>
                                 </div>'
                             );
                         }),
@@ -181,6 +269,13 @@ class EditTransaction extends EditRecord
                             ->action(function ($livewire) {
                                 $livewire->save();
                                 $this->record->refresh();
+                            })
+                            ->disabled(function () {
+                                if ($this->record->clientVisit->status != VisitStatus::WAITING_FOR_PAYMENT) {
+                                    return true;
+                                } else {
+                                    return false;
+                                }
                             })
                     ])->fullWidth(),
                 ])->columnSpan(1),

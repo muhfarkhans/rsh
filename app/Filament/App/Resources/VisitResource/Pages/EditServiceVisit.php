@@ -12,6 +12,7 @@ use App\Models\ClientVisit;
 use App\Models\ClientVisitCheck;
 use App\Models\ClientVisitCupping;
 use App\Models\Service;
+use App\Models\Setting;
 use App\Models\Transaction;
 use App\Models\TransactionItem;
 use App\Models\User;
@@ -27,6 +28,7 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Get;
+use Filament\Support\Colors\Color;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\HtmlString;
@@ -35,13 +37,25 @@ class EditServiceVisit extends EditRecord
 {
     protected static string $resource = VisitResource::class;
 
+    protected Setting $setting;
+
     protected static ?string $title = 'Edit Visit Service';
+
+    public function __construct()
+    {
+        $this->setting = Setting::where('id', 1)->first();
+    }
 
     protected function getHeaderActions(): array
     {
         return [
             //
         ];
+    }
+
+    protected function getRedirectUrl(): ?string
+    {
+        return static::getResource()::getUrl('index');
     }
 
     public function form(Form $form): Form
@@ -138,11 +152,22 @@ class EditServiceVisit extends EditRecord
 
             $totalTransaction = Transaction::count();
             $service = Service::where('id', $data['service_id'])->first();
+
+            $additionalCupingPoint = 0;
+            if (is_array($data['points'])) {
+                if (count($data['points']) > 14) {
+                    $additionalCupingPoint = count($data['points']) - 14;
+                }
+            }
+
+            $additionalCuppingPointPrice = $this->setting->additional_cupping_price * $additionalCupingPoint;
+            $amount = $service->price + $additionalCuppingPointPrice;
+
             $dataTransaction = [
                 'client_visit_id' => $record->id,
                 'created_by' => Auth::user()->id,
                 'invoice_id' => "INV" . str_pad($totalTransaction + 1, 5, 0, STR_PAD_LEFT),
-                'amount' => $service->price,
+                'amount' => $amount,
                 'payment_method' => PaymentMethod::WAITING_FOR_PAYMENT,
                 'status' => TransactionStatus::WAITING_FOR_PAYMENT,
             ];
@@ -155,8 +180,21 @@ class EditServiceVisit extends EditRecord
                     'name' => $service->name,
                     'qty' => 1,
                     'price' => $service->price,
+                    'is_additional' => 0,
                 ];
                 TransactionItem::create($dataTransactionItem);
+
+                if ($additionalCupingPoint > 0) {
+                    $dataAdditionalTransactionItem = [
+                        'transaction_id' => $createdTransaction->id,
+                        'service_id' => $service->id,
+                        'name' => "Titik bekam tambahan (" . $service->name . ")",
+                        'qty' => $additionalCupingPoint,
+                        'price' => $additionalCuppingPointPrice,
+                        'is_additional' => 1,
+                    ];
+                    TransactionItem::create($dataAdditionalTransactionItem);
+                }
 
                 $dataClientVisit = [
                     'status' => VisitStatus::WAITING_FOR_SERVICE
@@ -312,6 +350,7 @@ class EditServiceVisit extends EditRecord
 
                                 return true;
                             })
+                            ->live()
                             ->columnSpanFull(),
                         Placeholder::make('Pemberitahuan!')
                             ->content('Layanan yang anda pilih tidak termasuk terapi bekam')
@@ -343,6 +382,96 @@ class EditServiceVisit extends EditRecord
                                 return true;
                             })
                             ->columnSpanFull(),
+                        Section::make()->schema([
+                            Placeholder::make('Titik bekam digunakan')
+                                ->content(function (Get $get) {
+                                    $points = $get('points');
+                                    $total = 0;
+                                    if (is_array($points)) {
+                                        $total = count($points);
+                                    }
+
+                                    return new HtmlString("<strong style=\"color: rgb(" . Color::Teal[500] . ")\">" . $total . "</strong> / 14 Kuota titik digunakan");
+                                })
+                                ->hidden(function (Get $get) {
+                                    $id = $get('service_id');
+
+                                    if ($id == null) {
+                                        return true;
+                                    }
+
+                                    return false;
+                                })
+                                ->columnSpanFull(),
+                            Placeholder::make('Tambah titik bekam')
+                                ->hint("1 Titik baru seharga " . number_format($this->setting->additional_cupping_price, 0, ',', '.') . " Rupiah")
+                                ->content(function (Get $get) {
+                                    $points = $get('points');
+                                    $additional = 0;
+                                    if (is_array($points)) {
+                                        if (count($points) >= 14) {
+                                            $additional = count($points) - 14;
+                                        }
+                                    }
+
+                                    return new HtmlString("<strong style=\"color: rgb(" . Color::Blue[500] . ")\">" . $additional . "</strong> Titik tambahan ditambahkan");
+                                })
+                                ->hidden(function (Get $get) {
+                                    $id = $get('service_id');
+
+                                    if ($id == null) {
+                                        return true;
+                                    }
+
+                                    $points = $get('points');
+                                    if (is_array($points)) {
+                                        if (count($points) >= 14) {
+                                            return false;
+                                        }
+                                    }
+
+                                    return true;
+                                })
+                                ->columnSpanFull(),
+                            Placeholder::make('Tambahan biaya')
+                                ->content(function (Get $get) {
+                                    $points = $get('points');
+                                    $additional = 0;
+                                    if (is_array($points)) {
+                                        if (count($points) >= 14) {
+                                            $additional = count($points) - 14;
+                                        }
+                                    }
+
+                                    $price = $additional * $this->setting->additional_cupping_price;
+                                    return new HtmlString("<strong style=\"color: rgb(" . Color::Blue[500] . ")\">" . number_format($price, 0, ',', '.') . "</strong> Rupiah");
+                                })
+                                ->hidden(function (Get $get) {
+                                    $id = $get('service_id');
+
+                                    if ($id == null) {
+                                        return true;
+                                    }
+
+                                    $points = $get('points');
+                                    if (is_array($points)) {
+                                        if (count($points) >= 14) {
+                                            return false;
+                                        }
+                                    }
+
+                                    return true;
+                                })
+                                ->columnSpanFull(),
+                        ])->columns(2)->hidden(function (Get $get) {
+                            $id = $get('service_id');
+
+                            if ($id == null) {
+                                return true;
+                            }
+
+                            return false;
+                        })
                     ])->columnSpan(1)
                 ])
                     ->columnSpan(1),

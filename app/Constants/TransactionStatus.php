@@ -13,7 +13,7 @@ class TransactionStatus
     public static function getLabels()
     {
         return [
-            self::WAITING_FOR_PAYMENT => 'Waiting For Payment',
+                // self::WAITING_FOR_PAYMENT => 'Waiting For Payment',
                 // self::EXPIRED => 'Expired',
             self::CANCEL => 'Cancel',
             self::PAID => 'Paid',
