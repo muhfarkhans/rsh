@@ -75,10 +75,10 @@ class EditServiceVisit extends EditRecord
         }
     }
 
-    // protected function getRedirectUrl(): ?string
-    // {
-    //     return static::getResource()::getUrl('index');
-    // }
+    protected function getRedirectUrl(): ?string
+    {
+        return static::getResource()::getUrl('index');
+    }
 
     public function form(Form $form): Form
     {
@@ -436,13 +436,14 @@ class EditServiceVisit extends EditRecord
                         Section::make()->schema([
                             Placeholder::make('Titik bekam digunakan')
                                 ->content(function (Get $get) {
+                                    $limit = $this->setting->limit_cupping_point;
                                     $points = $get('points');
                                     $total = 0;
                                     if (is_array($points)) {
                                         $total = count($points);
                                     }
 
-                                    return new HtmlString("<strong style=\"color: rgb(" . Color::Teal[500] . ")\">" . $total . "</strong> / 14 Kuota titik digunakan");
+                                    return new HtmlString("<strong style=\"color: rgb(" . Color::Teal[500] . ")\">" . $total . "</strong> / " . $limit . " Kuota titik digunakan");
                                 })
                                 ->hidden(function (Get $get) {
                                     $id = $get('service_id');
@@ -457,17 +458,19 @@ class EditServiceVisit extends EditRecord
                             Placeholder::make('Tambah titik bekam')
                                 ->hint("1 Titik baru seharga " . number_format($this->setting->additional_cupping_price, 0, ',', '.') . " Rupiah")
                                 ->content(function (Get $get) {
+                                    $limit = $this->setting->limit_cupping_point;
                                     $points = $get('points');
                                     $additional = 0;
                                     if (is_array($points)) {
-                                        if (count($points) >= 14) {
-                                            $additional = count($points) - 14;
+                                        if (count($points) >= $limit) {
+                                            $additional = count($points) - $limit;
                                         }
                                     }
 
                                     return new HtmlString("<strong style=\"color: rgb(" . Color::Blue[500] . ")\">" . $additional . "</strong> Titik tambahan ditambahkan");
                                 })
                                 ->hidden(function (Get $get) {
+                                    $limit = $this->setting->limit_cupping_point;
                                     $id = $get('service_id');
 
                                     if ($id == null) {
@@ -476,7 +479,7 @@ class EditServiceVisit extends EditRecord
 
                                     $points = $get('points');
                                     if (is_array($points)) {
-                                        if (count($points) >= 14) {
+                                        if (count($points) >= $limit) {
                                             return false;
                                         }
                                     }
@@ -486,11 +489,12 @@ class EditServiceVisit extends EditRecord
                                 ->columnSpanFull(),
                             Placeholder::make('Tambahan biaya')
                                 ->content(function (Get $get) {
+                                    $limit = $this->setting->limit_cupping_point;
                                     $points = $get('points');
                                     $additional = 0;
                                     if (is_array($points)) {
-                                        if (count($points) >= 14) {
-                                            $additional = count($points) - 14;
+                                        if (count($points) >= $limit) {
+                                            $additional = count($points) - $limit;
                                         }
                                     }
 
@@ -498,6 +502,7 @@ class EditServiceVisit extends EditRecord
                                     return new HtmlString("<strong style=\"color: rgb(" . Color::Blue[500] . ")\">" . number_format($price, 0, ',', '.') . "</strong> Rupiah");
                                 })
                                 ->hidden(function (Get $get) {
+                                    $limit = $this->setting->limit_cupping_point;
                                     $id = $get('service_id');
 
                                     if ($id == null) {
@@ -506,7 +511,7 @@ class EditServiceVisit extends EditRecord
 
                                     $points = $get('points');
                                     if (is_array($points)) {
-                                        if (count($points) >= 14) {
+                                        if (count($points) >= $limit) {
                                             return false;
                                         }
                                     }

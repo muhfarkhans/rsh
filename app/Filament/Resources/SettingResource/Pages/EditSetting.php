@@ -49,6 +49,12 @@ class EditSetting extends EditRecord
                 ->numeric()
                 ->required()
                 ->columnSpanFull(),
+            TextInput::make('limit_cupping_point')
+                ->label('Batasan titik bekam')
+                ->suffix('Titik')
+                ->numeric()
+                ->required()
+                ->columnSpanFull(),
         ];
     }
 }

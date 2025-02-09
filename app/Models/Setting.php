@@ -13,6 +13,7 @@ class Setting extends Model
 
     protected $fillable = [
         'additional_cupping_price',
+        'limit_cupping_point',
         'updated_by',
     ];
 }
