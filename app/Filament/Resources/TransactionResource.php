@@ -49,6 +49,10 @@ class TransactionResource extends Resource
                     ->label('Client')
                     ->searchable()
                     ->sortable(),
+                TextColumn::make('clientVisit.therapy.name')
+                    ->label('Terapis')
+                    ->searchable()
+                    ->sortable(),
                 TextColumn::make('status')
                     ->label('Status')
                     ->badge()
