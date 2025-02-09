@@ -250,8 +250,13 @@ class EditServiceVisit extends EditRecord
 
             ClientVisit::where('id', $record->id)->update($dataClientVisit);
 
-            Helper::deleteFileStorage($this->record->signature_therapist);
-            Helper::deleteFileStorage($this->record->signature_client);
+            if ($this->record->signature_therapist != null) {
+                Helper::deleteFileStorage($this->record->signature_therapist);
+            }
+
+            if ($this->record->signature_client != null) {
+                Helper::deleteFileStorage($this->record->signature_client);
+            }
 
             return $record;
         });
