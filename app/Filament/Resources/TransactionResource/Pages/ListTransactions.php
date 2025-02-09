@@ -4,6 +4,8 @@ namespace App\Filament\Resources\TransactionResource\Pages;
 
 use App\Constants\TransactionStatus;
 use App\Filament\Resources\TransactionResource;
+use App\Livewire\StatsTransaction;
+use App\Livewire\StatsVisitor;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Resources\Pages\ListRecords\Tab;
@@ -17,6 +19,13 @@ class ListTransactions extends ListRecords
     {
         return [
             //
+        ];
+    }
+
+    protected function getHeaderWidgets(): array
+    {
+        return [
+            StatsTransaction::class
         ];
     }
 
