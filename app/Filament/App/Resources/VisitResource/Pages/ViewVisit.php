@@ -101,7 +101,23 @@ class ViewVisit extends ViewRecord
                                             VisitStatus::DONE => 'Selesai',
                                             default => $record->status,
                                         };
+                                    }),
+                                TextEntry::make('duration')
+                                    ->label('Duration')
+                                    ->getStateUsing(function ($record) {
+                                        $start = Carbon::parse($record->started_at);
+                                        $end = Carbon::parse($record->ended_at);
+
+                                        $durationInMinutes = $start->diffInMinutes($end);
+                                        return round($durationInMinutes) . " Menit";
                                     })
+                                    ->hidden(function ($record) {
+                                        if ($record->started_at == null && $record->ended_at == null) {
+                                            return true;
+                                        }
+
+                                        return false;
+                                    }),
                             ])
                             ->columns(2)
                             ->columnSpan(2),
