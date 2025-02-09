@@ -2,10 +2,12 @@
 
 namespace App\Filament\Resources;
 
+use App\Constants\Role;
 use App\Constants\TransactionStatus;
 use App\Filament\Resources\TransactionResource\Pages;
 use App\Filament\Resources\TransactionResource\RelationManagers;
 use App\Models\Transaction;
+use App\Models\User;
 use Carbon\Carbon;
 use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
@@ -16,6 +18,7 @@ use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\Indicator;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -113,7 +116,21 @@ class TransactionResource extends Resource
 
                         return $indicators;
                     })
-                    ->columnSpan(2)->columns(2)
+                    ->columnSpan(2)->columns(2),
+                SelectFilter::make('clientVisit.therapy_id')
+                    ->label('Terapis')
+                    ->query(function (Builder $query, array $data) {
+                        if (!empty($data['value']))
+                            $query->whereHas(
+                                'clientVisit',
+                                fn(Builder $query) => $query->where('therapy_id', '=', (int) $data['value'])
+                            );
+                    })
+                    ->options(function () {
+                        return User::with(['roles'])->whereHas('roles', function ($query) {
+                            return $query->where('name', Role::THERAPIST);
+                        })->get()->pluck('name', 'id');
+                    })
             ], layout: FiltersLayout::AboveContent)->filtersFormColumns(2)
             ->actions([
                 Tables\Actions\EditAction::make(),

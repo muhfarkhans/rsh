@@ -9,6 +9,7 @@ use App\Filament\App\Resources\VisitResource\RelationManagers;
 use App\Helpers\FilamentHelper;
 use App\Models\Client;
 use App\Models\ClientVisit;
+use App\Models\User;
 use Auth;
 use Carbon\Carbon;
 use Filament\Forms;
@@ -20,6 +21,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\Indicator;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\DB;
@@ -129,7 +131,14 @@ class VisitResource extends Resource
 
                         return $indicators;
                     })
-                    ->columnSpan(2)->columns(2)
+                    ->columnSpan(2)->columns(2),
+                SelectFilter::make('therapy_id')
+                    ->label('Terapis')
+                    ->options(function () {
+                        return User::with(['roles'])->whereHas('roles', function ($query) {
+                            return $query->where('name', Role::THERAPIST);
+                        })->get()->pluck('name', 'id');
+                    })
             ], layout: FiltersLayout::AboveContent)->filtersFormColumns(2)
             ->actions([
                 // Tables\Actions\EditAction::make(),
