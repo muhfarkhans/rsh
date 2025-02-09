@@ -14,21 +14,39 @@ class StatsTransaction extends BaseWidget
 {
     public Transaction $transaction;
 
-    public function getAmountByMethod($method, $isToday = false)
+    public function getAmountByMethod($method, $isToday = false, $isMonth = false)
     {
         return Transaction::where('payment_method', $method)
             ->where('status', TransactionStatus::PAID)
             ->when($isToday, function ($query) {
                 $query->whereDate('created_at', Carbon::today());
             })
+            ->when($isMonth, function ($query) {
+                $query->whereBetween(
+                    'created_at',
+                    [
+                        Carbon::now()->startOfMonth(),
+                        Carbon::now()->endOfMonth()
+                    ]
+                );
+            })
             ->sum('amount');
     }
 
-    public function getAmount($isToday = false)
+    public function getAmount($isToday = false, $isMonth = false)
     {
         return Transaction::where('status', TransactionStatus::PAID)
             ->when($isToday, function ($query) {
                 $query->whereDate('created_at', Carbon::today());
+            })
+            ->when($isMonth, function ($query) {
+                $query->whereBetween(
+                    'created_at',
+                    [
+                        Carbon::now()->startOfMonth(),
+                        Carbon::now()->endOfMonth()
+                    ]
+                );
             })
             ->sum('amount');
     }
@@ -51,10 +69,17 @@ class StatsTransaction extends BaseWidget
                     "qris" => $this->getAmountByMethod(PaymentMethod::QRIS, true),
                 ]
             ],
+            "month" => [
+                "total" => $this->getAmount(false, true),
+                "method" => [
+                    "cash" => $this->getAmountByMethod(PaymentMethod::CASH, false, isMonth: true),
+                    "qris" => $this->getAmountByMethod(PaymentMethod::QRIS, false, true),
+                ]
+            ],
         ];
     }
 
-    public function getTotalByMethod($method, $isToday = false)
+    public function getTotalByMethod($method, $isToday = false, $isMonth = false)
     {
         return Transaction::where('payment_method', $method)
             ->where('status', TransactionStatus::PAID)
@@ -64,11 +89,20 @@ class StatsTransaction extends BaseWidget
             ->count();
     }
 
-    public function getTotal($isToday = false)
+    public function getTotal($isToday = false, $isMonth = false)
     {
         return Transaction::where('status', TransactionStatus::PAID)
             ->when($isToday, function ($query) {
                 $query->whereDate('created_at', Carbon::today());
+            })
+            ->when($isMonth, function ($query) {
+                $query->whereBetween(
+                    'created_at',
+                    [
+                        Carbon::now()->startOfMonth(),
+                        Carbon::now()->endOfMonth()
+                    ]
+                );
             })
             ->count();
     }
@@ -88,6 +122,13 @@ class StatsTransaction extends BaseWidget
                 "method" => [
                     "cash" => $this->getTotalByMethod(PaymentMethod::CASH, true),
                     "qris" => $this->getTotalByMethod(PaymentMethod::QRIS, true),
+                ]
+            ],
+            "month" => [
+                "total" => $this->getTotal(false, true),
+                "method" => [
+                    "cash" => $this->getTotalByMethod(PaymentMethod::CASH, false, true),
+                    "qris" => $this->getTotalByMethod(PaymentMethod::QRIS, false, true),
                 ]
             ],
         ];
@@ -139,39 +180,39 @@ class StatsTransaction extends BaseWidget
             ")
                 ),
             Stat::make(
-                'Total transaksi dilakukan',
-                $total['all']['total']
+                'Total transaksi bulan ini',
+                $total['month']['total']
             )->description(
                     new HtmlString("
                 <table style=\"width: 100%\">
                     <tr>
                         <td>Cash</td>
                         <td>: </td>
-                        <td><strong>" . $total['all']['method']['cash'] . "</strong></td>
+                        <td><strong>" . $total['month']['method']['cash'] . "</strong></td>
                     </tr>
                     <tr>
                         <td>Qris</td>
                         <td>: </td>
-                        <td><strong>" . $total['all']['method']['qris'] . "</strong></td>
+                        <td><strong>" . $total['month']['method']['qris'] . "</strong></td>
                     </tr>
                 </table>
             ")
                 ),
             Stat::make(
-                'Total uang masuk',
-                number_format($amount['all']['total'], 0, ',', '.')
+                'Total uang masuk bulan ini',
+                number_format($amount['month']['total'], 0, ',', '.')
             )->description(
                     new HtmlString("
                 <table style=\"width: 100%\">
                     <tr>
                         <td>Cash</td>
                         <td>: </td>
-                        <td><strong>" . number_format($amount['all']['method']['cash'], 0, ',', '.') . "</strong></td>
+                        <td><strong>" . number_format($amount['month']['method']['cash'], 0, ',', '.') . "</strong></td>
                     </tr>
                     <tr>
                         <td>Qris</td>
                         <td>: </td>
-                        <td><strong>" . number_format($amount['all']['method']['qris'], 0, ',', '.') . "</strong></td>
+                        <td><strong>" . number_format($amount['month']['method']['qris'], 0, ',', '.') . "</strong></td>
                     </tr>
                 </table>
             ")
