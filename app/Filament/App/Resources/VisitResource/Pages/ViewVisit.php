@@ -195,7 +195,7 @@ class ViewVisit extends ViewRecord
                                             DB::transaction(function () use ($record, $data) {
                                                 ClientVisit::where('id', $record->id)
                                                     ->update([
-                                                        'status' => VisitStatus::DONE,
+                                                        'status' => VisitStatus::WAITING_FOR_PAYMENT,
                                                         'ended_at' => now(),
                                                     ]);
                                             });
