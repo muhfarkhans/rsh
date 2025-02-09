@@ -32,6 +32,7 @@ use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\HtmlString;
 
 
 class CreateVisit extends CreateRecord
@@ -126,9 +127,15 @@ class CreateVisit extends CreateRecord
             $clientVisit = ClientVisit::where('client_id', $client->id)->orderBy('created_at', 'desc')->get();
 
             if (count($clientVisit) > 0) {
+                $liLastDate = '';
+                for ($i = 0; $i < 5; $i++) {
+                    if (isset($clientVisit[$i])) {
+                        $liLastDate .= '<li><span style="font-weight: bold">' . $clientVisit[$i]->created_at . '</span> ' . Carbon::parse($clientVisit[$i]->created_at)->diffForHumans() . '</li>';
+                    }
+                }
                 $this->clientVisitStats = [
                     'total' => count($clientVisit),
-                    'last_date' => $clientVisit[0]->created_at,
+                    'last_date' => $liLastDate,
                 ];
             } else {
                 $this->clientVisitStats = [
@@ -193,7 +200,9 @@ class CreateVisit extends CreateRecord
                             Placeholder::make('last_visit')
                                 ->label('Tanggal Kunjungan Terkahir')
                                 ->content(function () {
-                                    return $this->clientVisitStats['last_date'];
+                                    return new HtmlString('
+                                        <ol style="list-style-type: decimal; margin-left: 30px">' . $this->clientVisitStats['last_date'] . '</ol>
+                                    ');
                                 })
                                 ->columnSpanFull(),
                         ]),
