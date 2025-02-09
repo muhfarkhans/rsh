@@ -96,8 +96,13 @@ class EditServiceVisit extends EditRecord
         $data['client_address'] = $this->record->client->address;
         $data['client_relation_as'] = $this->record->relation_as;
 
-        $data['signature_therapist'] = Helper::getFileAsBase64($this->record->signature_therapist);
-        $data['signature_client'] = Helper::getFileAsBase64($this->record->signature_client);
+        if ($this->record->signature_therapist != null) {
+            $data['signature_therapist'] = Helper::getFileAsBase64($this->record->signature_therapist);
+        }
+
+        if ($this->record->signature_client != null) {
+            $data['signature_client'] = Helper::getFileAsBase64($this->record->signature_client);
+        }
 
         if ($this->record->clientVisitCupping != null) {
             $data['service_id'] = $this->record->clientVisitCupping->service_id;
