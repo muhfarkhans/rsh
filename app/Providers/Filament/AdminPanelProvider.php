@@ -84,6 +84,7 @@ class AdminPanelProvider extends PanelProvider
                     ->sort(10),
             ])
             ->navigationGroups([
+                'Reports',
                 'User Management',
                 'Master Data',
                 'Filament Shield',

@@ -12,6 +12,13 @@ use Illuminate\Support\HtmlString;
 
 class StatsTransaction extends BaseWidget
 {
+    public bool $isToday;
+
+    public function mount(bool $isToday = false): void
+    {
+        $this->isToday = $isToday;
+    }
+
     public Transaction $transaction;
 
     public function getAmountByMethod($method, $isToday = false, $isMonth = false)
@@ -50,7 +57,6 @@ class StatsTransaction extends BaseWidget
             })
             ->sum('amount');
     }
-
 
     public function getSumAmount()
     {
@@ -134,85 +140,127 @@ class StatsTransaction extends BaseWidget
         ];
     }
 
-
     protected function getStats(): array
     {
         $amount = $this->getSumAmount();
         $total = $this->getSumTotal();
 
+        if ($this->isToday) {
+            return [
+                Stat::make(
+                    'Transaksi hari ini',
+                    $total['today']['total']
+                )->description(
+                        new HtmlString("
+                    <table style=\"width: 100%\">
+                        <tr>
+                            <td>Cash</td>
+                            <td>: </td>
+                            <td><strong>" . $total['today']['method']['cash'] . "</strong></td>
+                        </tr>
+                        <tr>
+                            <td>Qris</td>
+                            <td>: </td>
+                            <td><strong>" . $total['today']['method']['qris'] . "</strong></td>
+                        </tr>
+                    </table>
+                ")
+                    ),
+                Stat::make(
+                    'Uang masuk hari ini',
+                    number_format($amount['today']['total'], 0, ',', '.')
+                )->description(
+                        new HtmlString("
+                    <table style=\"width: 100%\">
+                        <tr>
+                            <td>Cash</td>
+                            <td>: </td>
+                            <td><strong>" . number_format($amount['today']['method']['cash'], 0, ',', '.') . "</strong></td>
+                        </tr>
+                        <tr>
+                            <td>Qris</td>
+                            <td>: </td>
+                            <td><strong>" . number_format($amount['today']['method']['qris'], 0, ',', '.') . "</strong></td>
+                        </tr>
+                    </table>
+                ")
+                    ),
+                Stat::make(
+                    'Total transaksi bulan ini',
+                    $total['month']['total']
+                )->description(
+                        new HtmlString("
+                    <table style=\"width: 100%\">
+                        <tr>
+                            <td>Cash</td>
+                            <td>: </td>
+                            <td><strong>" . $total['month']['method']['cash'] . "</strong></td>
+                        </tr>
+                        <tr>
+                            <td>Qris</td>
+                            <td>: </td>
+                            <td><strong>" . $total['month']['method']['qris'] . "</strong></td>
+                        </tr>
+                    </table>
+                ")
+                    ),
+                Stat::make(
+                    'Total uang masuk bulan ini',
+                    number_format($amount['month']['total'], 0, ',', '.')
+                )->description(
+                        new HtmlString("
+                    <table style=\"width: 100%\">
+                        <tr>
+                            <td>Cash</td>
+                            <td>: </td>
+                            <td><strong>" . number_format($amount['month']['method']['cash'], 0, ',', '.') . "</strong></td>
+                        </tr>
+                        <tr>
+                            <td>Qris</td>
+                            <td>: </td>
+                            <td><strong>" . number_format($amount['month']['method']['qris'], 0, ',', '.') . "</strong></td>
+                        </tr>
+                    </table>
+                ")
+                    ),
+            ];
+        }
+
         return [
             Stat::make(
-                'Transaksi hari ini',
-                $total['today']['total']
+                'Transaksi masuk',
+                $total['all']['total']
             )->description(
                     new HtmlString("
                 <table style=\"width: 100%\">
                     <tr>
                         <td>Cash</td>
                         <td>: </td>
-                        <td><strong>" . $total['today']['method']['cash'] . "</strong></td>
+                        <td><strong>" . $total['all']['method']['cash'] . "</strong></td>
                     </tr>
                     <tr>
                         <td>Qris</td>
                         <td>: </td>
-                        <td><strong>" . $total['today']['method']['qris'] . "</strong></td>
+                        <td><strong>" . $total['all']['method']['qris'] . "</strong></td>
                     </tr>
                 </table>
             ")
                 ),
             Stat::make(
-                'Uang masuk hari ini',
-                number_format($amount['today']['total'], 0, ',', '.')
+                'Uang masuk',
+                number_format($amount['all']['total'], 0, ',', '.')
             )->description(
                     new HtmlString("
                 <table style=\"width: 100%\">
                     <tr>
                         <td>Cash</td>
                         <td>: </td>
-                        <td><strong>" . number_format($amount['today']['method']['cash'], 0, ',', '.') . "</strong></td>
+                        <td><strong>" . number_format($amount['all']['method']['cash'], 0, ',', '.') . "</strong></td>
                     </tr>
                     <tr>
                         <td>Qris</td>
                         <td>: </td>
-                        <td><strong>" . number_format($amount['today']['method']['qris'], 0, ',', '.') . "</strong></td>
-                    </tr>
-                </table>
-            ")
-                ),
-            Stat::make(
-                'Total transaksi bulan ini',
-                $total['month']['total']
-            )->description(
-                    new HtmlString("
-                <table style=\"width: 100%\">
-                    <tr>
-                        <td>Cash</td>
-                        <td>: </td>
-                        <td><strong>" . $total['month']['method']['cash'] . "</strong></td>
-                    </tr>
-                    <tr>
-                        <td>Qris</td>
-                        <td>: </td>
-                        <td><strong>" . $total['month']['method']['qris'] . "</strong></td>
-                    </tr>
-                </table>
-            ")
-                ),
-            Stat::make(
-                'Total uang masuk bulan ini',
-                number_format($amount['month']['total'], 0, ',', '.')
-            )->description(
-                    new HtmlString("
-                <table style=\"width: 100%\">
-                    <tr>
-                        <td>Cash</td>
-                        <td>: </td>
-                        <td><strong>" . number_format($amount['month']['method']['cash'], 0, ',', '.') . "</strong></td>
-                    </tr>
-                    <tr>
-                        <td>Qris</td>
-                        <td>: </td>
-                        <td><strong>" . number_format($amount['month']['method']['qris'], 0, ',', '.') . "</strong></td>
+                        <td><strong>" . number_format($amount['all']['method']['qris'], 0, ',', '.') . "</strong></td>
                     </tr>
                 </table>
             ")

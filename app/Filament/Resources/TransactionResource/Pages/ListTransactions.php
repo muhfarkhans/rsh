@@ -9,6 +9,7 @@ use App\Livewire\StatsVisitor;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Resources\Pages\ListRecords\Tab;
+use Filament\Widgets\WidgetConfiguration;
 use Illuminate\Database\Eloquent\Builder;
 
 class ListTransactions extends ListRecords
@@ -25,7 +26,7 @@ class ListTransactions extends ListRecords
     protected function getHeaderWidgets(): array
     {
         return [
-            StatsTransaction::class
+            new WidgetConfiguration(StatsTransaction::class, ['isToday' => true])
         ];
     }
 

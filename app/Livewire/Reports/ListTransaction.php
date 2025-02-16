@@ -1,46 +1,40 @@
 <?php
 
-namespace App\Filament\Resources;
+namespace App\Livewire\Reports;
 
 use App\Constants\Role;
 use App\Constants\TransactionStatus;
-use App\Filament\Resources\TransactionResource\Pages;
-use App\Filament\Resources\TransactionResource\RelationManagers;
+use App\Filament\Resources\TransactionResource;
 use App\Models\Transaction;
 use App\Models\User;
 use Carbon\Carbon;
-use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Form;
-use Filament\Resources\Resource;
-use Filament\Tables;
+use Filament\Tables\Actions\BulkActionGroup;
+use Filament\Tables\Actions\DeleteBulkAction;
+use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Actions\ViewAction;
+use Livewire\Component;
+use Filament\Forms\Concerns\InteractsWithForms;
+use Filament\Forms\Contracts\HasForms;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Concerns\InteractsWithTable;
+use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\Indicator;
-use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
-class TransactionResource extends Resource
+class ListTransaction extends Component implements HasForms, HasTable
 {
-    protected static ?string $model = Transaction::class;
-
-    protected static ?string $navigationIcon = 'heroicon-o-banknotes';
-
-    public static function form(Form $form): Form
-    {
-        return $form
-            ->schema([
-                //
-            ]);
-    }
+    use InteractsWithTable;
+    use InteractsWithForms;
 
     public static function table(Table $table): Table
     {
         return $table
+            ->query(Transaction::query())
             ->columns([
                 TextColumn::make('index')
                     ->label('No.')
@@ -131,33 +125,32 @@ class TransactionResource extends Resource
                         return User::with(['roles'])->whereHas('roles', function ($query) {
                             return $query->where('name', Role::THERAPIST);
                         })->get()->pluck('name', 'id');
+                    }),
+                SelectFilter::make('status')
+                    ->label('Status')
+                    ->options(function () {
+                        return [
+                            TransactionStatus::WAITING_FOR_PAYMENT => 'Menunggu Pembayaran',
+                            TransactionStatus::PAID => 'Lunas',
+                            TransactionStatus::CANCEL => 'Lunas',
+                        ];
                     })
             ], layout: FiltersLayout::AboveContent)->filtersFormColumns(2)
             ->actions([
-                Tables\Actions\EditAction::make(),
                 ViewAction::make()
+                    ->url(fn(Transaction $record) => TransactionResource::getUrl('view', ['record' => $record->id]))
+            ])
+            ->headerActions([
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
 
-    public static function getRelations(): array
+    public function render()
     {
-        return [
-            //
-        ];
-    }
-
-    public static function getPages(): array
-    {
-        return [
-            'index' => Pages\ListTransactions::route('/'),
-            'create' => Pages\CreateTransaction::route('/create'),
-            'view' => Pages\ViewTransaction::route('/{record}'),
-            'edit' => Pages\EditTransaction::route('/{record}/edit'),
-        ];
+        return view('livewire.reports.list-transaction');
     }
 }
