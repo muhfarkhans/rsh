@@ -13,7 +13,7 @@ jobs:
         host: ${{ secrets.DOMAIN_HOSTING }}
         username: ${{ secrets.USER_HOSTING }}
         password: ${{ secrets.PW_HOSTING }}
-        port: ${{ secrets.PORT_HOSTING }}
+        port: 64000
         script: |
           cd admin.rshincaresurabaya.com
           git pull 
