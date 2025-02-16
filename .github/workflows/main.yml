@@ -2,17 +2,18 @@ name: DEPLOY TO SERVER
 
 on: [push, pull_request]
 
+
 jobs:
   Deploy-Laravel:
     runs-on: ubuntu-latest
     steps:
-    - name: Deploy Using ssh
+    - name: Deploy Using SSH
       uses: appleboy/ssh-action@master
       with:
         host: ${{ secrets.DOMAIN_HOSTING }}
         username: ${{ secrets.USER_HOSTING }}
-        password:  ${{ secrets.PW_HOSTING }}
+        password: ${{ secrets.PW_HOSTING }}
         port: ${{ secrets.PORT_HOSTING }}
         script: |
           cd admin.rshincaresurabaya.com
-          git pull
+          git pull 
