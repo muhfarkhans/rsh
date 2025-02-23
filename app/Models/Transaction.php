@@ -36,4 +36,24 @@ class Transaction extends Model
     {
         return $this->hasMany(TransactionItem::class, 'transaction_id');
     }
+
+    public function itemServiceName()
+    {
+        return $this->items();
+    }
+
+    public function itemServicePrice()
+    {
+        return $this->items();
+    }
+
+    public function itemServiceAddName()
+    {
+        return $this->items();
+    }
+
+    public function itemServiceAddPrice()
+    {
+        return $this->items();
+    }
 }

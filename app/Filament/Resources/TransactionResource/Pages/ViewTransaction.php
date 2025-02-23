@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\TransactionResource\Pages;
 
+use App\Constants\TransactionStatus;
 use App\Filament\Resources\TransactionResource;
 use Filament\Actions;
 use Filament\Infolists\Components\Grid;
@@ -48,81 +49,106 @@ class ViewTransaction extends ViewRecord
                                         TextEntry::make('name')
                                             ->label('Nama')
                                             ->columnSpanFull(),
-                                        TextEntry::make('therapy.name')
+                                        TextEntry::make('transaction.clientVisit.therapy.name')
                                             ->label('Terapis')
                                             ->columnSpan(1),
                                         TextEntry::make('price')
                                             ->label('Harga')
                                             ->columnSpan(1),
-                                        RepeatableEntry::make('additional')
-                                            ->label('Tambahan')
-                                            ->schema([
-                                                TextEntry::make('service_name')
-                                                    ->label('Nama')
-                                                    ->columnSpanFull(),
-                                                TextEntry::make('service_qty')
-                                                    ->label('Qty')
-                                                    ->columnSpan(1),
-                                                TextEntry::make('service_price')
-                                                    ->label('Harga')
-                                                    ->columnSpan(1),
-                                            ])
-                                            ->columns(2)
-                                            ->columnSpanFull(),
+                                        TextEntry::make('qty')
+                                            ->label('Qty')
+                                            ->columnSpan(1),
                                     ])
-                                    ->columns(2)
+                                    ->columns(3)
                                     ->columnSpanFull(),
                             ])->columnSpanFull(),
                         ])->columnSpan(2),
                     Section::make('Pembayaran')->schema([
                         TextEntry::make('total_services')
                             ->label('Service')
-                            ->inlineLabel()
                             ->extraAttributes(['style' => 'text-align: right;'])
-                            // ->content(function ($state) {
-                            //     return new HtmlString(
-                            //         '
-                            //         <h1>' . number_format($state, 0, ',', '.') . '</h1>
-                            //         '
-                            //     );
-                            // })
+                            ->state(function ($record) {
+                                $totalPriceService = 0;
+                                $totalPriceAdditionalService = 0;
+
+                                foreach ($record->items as $key => $item) {
+                                    if ($item->is_additional == 0) {
+                                        $totalPriceService += $item->price;
+                                    } else {
+                                        $totalPriceAdditionalService += $item->price;
+                                    }
+                                }
+
+                                return new HtmlString(
+                                    '
+                                    <h1>Rp. ' . number_format($totalPriceService, 0, ',', '.') . '</h1>
+                                    '
+                                );
+                            })
                             ->columnSpanFull(),
                         TextEntry::make('total_additional')
                             ->label('Tambahan')
-                            ->inlineLabel()
                             ->extraAttributes(['style' => 'text-align: right;'])
-                            // ->content(function ($state) {
-                            //     return new HtmlString(
-                            //         '
-                            //         <h1>' . number_format($state, 0, ',', '.') . '</h1>
-                            //         '
-                            //     );
-                            // })
+                            ->state(function ($record) {
+                                $totalPriceService = 0;
+                                $totalPriceAdditionalService = 0;
+
+                                foreach ($record->items as $key => $item) {
+                                    if ($item->is_additional == 0) {
+                                        $totalPriceService += $item->price;
+                                    } else {
+                                        $totalPriceAdditionalService += $item->price;
+                                    }
+                                }
+
+                                return new HtmlString(
+                                    '
+                                    <h1>Rp. ' . number_format($totalPriceAdditionalService, 0, ',', '.') . '</h1>
+                                    '
+                                );
+                            })
                             ->columnSpanFull(),
                         TextEntry::make('total')
                             ->label('Total')
-                            ->inlineLabel()
                             ->extraAttributes(['style' => 'text-align:right;font-size:1.25em;font-weight:bold;'])
-                            // ->content(function ($state) {
-                            //     return new HtmlString(
-                            //         '
-                            //         <h1>Rp. ' . number_format($state, 0, ',', '.') . '</h1>
-                            //         '
-                            //     );
-                            // })
+                            ->state(function ($record) {
+                                return new HtmlString(
+                                    '
+                                    <h1>Rp. ' . number_format($record->amount, 0, ',', '.') . '</h1>
+                                    '
+                                );
+                            })
                             ->columnSpanFull(),
                         TextEntry::make('payment_method')
                             ->label('Metode Pembayaran')
+                            ->badge()
                             ->columnSpanFull(),
                         TextEntry::make('status')
                             ->label('Status')
+                            ->badge()
+                            ->color(function ($record) {
+                                return match ($record->status) {
+                                    TransactionStatus::WAITING_FOR_PAYMENT => 'success',
+                                    TransactionStatus::PAID => 'info',
+                                    TransactionStatus::CANCEL => 'danger',
+                                    default => 'secondary',
+                                };
+                            })
+                            ->getStateUsing(function ($record) {
+                                return match ($record->status) {
+                                    TransactionStatus::WAITING_FOR_PAYMENT => 'Menunggu pembayaran',
+                                    TransactionStatus::PAID => 'Lunas',
+                                    TransactionStatus::CANCEL => 'Dibatalkan',
+                                    default => '-',
+                                };
+                            })
                             ->columnSpanFull(),
                         TextEntry::make('updated_at')
                             ->hiddenLabel()
                             ->hint(function ($state) {
                                 return new HtmlString(
                                     '
-                                    <div style="text-align: right;">
+                                    <div style="">
                                     <p>Update terakhir </p>
                                     ' . $state . '
                                     <p>*tombol save digunakan ketika layanan sudah diberikan</p>

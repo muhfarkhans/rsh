@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Client extends Model
@@ -20,4 +21,9 @@ class Client extends Model
         'job',
         'address',
     ];
+
+    public function visits(): HasMany
+    {
+        return $this->hasMany(ClientVisit::class, 'client_id', 'id');
+    }
 }
