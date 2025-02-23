@@ -131,7 +131,7 @@ class ViewVisit extends ViewRecord
                                         })
                                         ->label(function (ClientVisit $record) {
                                             if ($record->clientVisitCupping != null) {
-                                                return 'Lihat Layanan';
+                                                return 'Edit dan Lihat Layanan';
                                             } else {
                                                 return 'Check Up dan Pilih Layanan';
                                             }
