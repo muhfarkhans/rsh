@@ -84,7 +84,7 @@ class UserResource extends Resource
                     }),
             ])
             ->filters([
-                Tables\Filters\TrashedFilter::make(),
+                // Tables\Filters\TrashedFilter::make(),
             ])
             ->actions([
                 Tables\Actions\EditAction::make()->using(function (User $user, array $data) {
