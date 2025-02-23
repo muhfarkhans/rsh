@@ -152,7 +152,7 @@ class CreateVisit extends CreateRecord
         } catch (\Throwable $th) {
             $set('client_found', 0);
             $this->clientVisitStats = [
-                'total' => count($clientVisit),
+                'total' => 0,
                 'last_date' => '-',
             ];
 
