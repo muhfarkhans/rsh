@@ -111,77 +111,13 @@ class UserResource extends Resource
                         $user->roles()->sync($data['roles']);
                     });
                 }),
+                Tables\Actions\ViewAction::make(),
                 Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
-            ]);
-    }
-
-    public static function infolist(Infolist $infolist): Infolist
-    {
-        return $infolist
-            ->schema([
-                Grid::make()->columns(3)->schema(
-                    [
-                        Section::make('User Data')
-                            ->headerActions([
-                                Action::make('edit')
-                                    ->label('Edit User')
-                                    ->icon('heroicon-o-pencil')
-                                    ->url(function (User $record) {
-                                        return UserResource::getUrl('edit', $record->id);
-                                    })
-                            ])
-                            ->schema([
-                                TextEntry::make('name')
-                                    ->label('Nama Lengkap User')
-                                    ->columnSpanFull()
-                                    ->extraAttributes(FilamentHelper::textEntryExtraAttributes()),
-                                TextEntry::make('phone')
-                                    ->label('No. Telepon / HP')
-                                    ->getStateUsing(fn($record) => filled($record->phone) ? $record->phone : 'N/A')
-                                    ->extraAttributes(FilamentHelper::textEntryExtraAttributes()),
-                                TextEntry::make('roles.name')
-                                    ->extraAttributes(FilamentHelper::textEntryExtraAttributes())
-                                    ->formatStateUsing(fn($state) => str($state)->headline()),
-                                TextEntry::make('created_at')->label('Created at'),
-                                TextEntry::make('updated_at')->label('Last updated at'),
-                            ])
-                            ->columns(2)
-                            ->columnSpan(2),
-                        Section::make('Generate Link Reset Password')
-                            ->description('Click the Button below and get the link to reset the password for this account')
-                            ->schema([
-                                Actions::make([
-                                    Action::make('generateResetLink')
-                                        ->action(function (User $record) {
-                                            $token = Hash::make(Str::random(60));
-                                            $record->update([
-                                                'reset_token' => $token,
-                                                'reset_token_expires' => now()->addHours(1),
-                                            ]);
-                                            $link = route('password.reset', [
-                                                'token' => $token,
-                                                'email' => $record->email,
-                                            ]);
-                                            Notification::make()
-                                                ->title('Reset link generated!')
-                                                ->body("The password reset link is: {$link}")
-                                                ->success()
-                                                ->send();
-                                        })
-                                        ->label('Generate Reset Link')
-                                        ->color('danger')
-                                        ->icon('heroicon-m-link')
-                                        ->iconPosition(IconPosition::After)
-                                ])->fullWidth(),
-                            ])
-                            ->columnSpan(1),
-                    ]
-                ),
             ]);
     }
 
@@ -209,71 +145,4 @@ class UserResource extends Resource
                 SoftDeletingScope::class,
             ]);
     }
-
-    // private static function getFormSchema(): array
-    // {
-    //     return [
-    //         Forms\Components\Select::make('roles')
-    //             ->relationship('roles', 'name')
-    //             ->getOptionLabelFromRecordUsing(fn(Role $record) => str($record->name)->headline())
-    //             ->preload()
-    //             ->reactive()
-    //             ->required()
-    //             ->columns(1),
-    //         Forms\Components\TextInput::make('name')
-    //             ->label('Nama Lengkap User')
-    //             ->placeholder('isi nama lengkap')
-    //             ->required()
-    //             ->columns(1),
-    //         Forms\Components\TextInput::make('phone')
-    //             ->label('Enter No. Telepon / HP')
-    //             ->placeholder('62******')
-    //             ->unique('users', 'phone', null, true)
-    //             ->required()
-    //             ->regex('/^62[0-9]{9,15}$/')
-    //             ->columns(1),
-    //         Forms\Components\TextInput::make('email')
-    //             ->label('Email')
-    //             ->unique('users', 'email', null, true)
-    //             ->placeholder('Email@domain.com')
-    //             ->email()
-    //             ->required()
-    //             ->columns(1),
-    //         Forms\Components\TextInput::make('password')
-    //             ->label('Password')
-    //             ->placeholder('isi password')
-    //             ->password()
-    //             ->required()
-    //             ->hidden(function (Get $get, string $operation) {
-    //                 if ($operation === 'edit')
-    //                     return true;
-    //             })
-    //             ->disabled(function (Get $get, string $operation) {
-    //                 if ($operation === 'edit')
-    //                     return true;
-    //             })
-    //             ->columns(1),
-    //         Forms\Components\TextInput::make('password_confirmation')
-    //             ->label('Konfirmasi Password')
-    //             ->placeholder('konfirmasi password')
-    //             ->same('password')
-    //             ->required()
-    //             ->hidden(function (Get $get, string $operation) {
-    //                 if ($operation === 'edit')
-    //                     return true;
-    //             })
-    //             ->disabled(function (Get $get, string $operation) {
-    //                 if ($operation === 'edit')
-    //                     return true;
-    //             })
-    //             ->password()
-    //             ->dehydrated(false)
-    //             ->columns(1),
-    //         Forms\Components\Textarea::make('address')
-    //             ->label('Alamat')
-    //             ->placeholder("Alamat lengkap")
-    //             ->required()
-    //             ->columnSpanFull(),
-    //     ];
-    // }
 }
