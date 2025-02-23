@@ -19,6 +19,7 @@ class UserSeeder extends Seeder
             'password' => bcrypt('password'),
             'phone' => '081237121212',
             'address' => 'Bantul Yogyakarta',
+            'is_active' => 1,
         ]);
     }
 }
