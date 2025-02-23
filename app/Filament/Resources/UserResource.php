@@ -22,6 +22,7 @@ use Filament\Resources\Resource;
 use Filament\Support\Enums\IconPosition;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -84,7 +85,19 @@ class UserResource extends Resource
                     }),
             ])
             ->filters([
-                // Tables\Filters\TrashedFilter::make(),
+                SelectFilter::make('roles.name')
+                    ->label('Roles')
+                    ->query(function (Builder $query, array $data) {
+                        if (!empty($data['value'])) {
+                            $query->whereHas(
+                                'roles',
+                                fn(Builder $query) => $query->where('role_id', '=', $data['value'])
+                            );
+                        }
+                    })
+                    ->options(function () {
+                        return Role::get()->pluck('name', 'id');
+                    })
             ])
             ->actions([
                 Tables\Actions\EditAction::make()->using(function (User $user, array $data) {
