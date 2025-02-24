@@ -143,7 +143,7 @@ class ListTransaction extends Component implements HasForms, HasTable
                         return [
                             TransactionStatus::WAITING_FOR_PAYMENT => 'Menunggu Pembayaran',
                             TransactionStatus::PAID => 'Lunas',
-                            TransactionStatus::CANCEL => 'Lunas',
+                            TransactionStatus::CANCEL => 'Dibatalkan',
                         ];
                     })
             ], layout: FiltersLayout::AboveContent)->filtersFormColumns(2)

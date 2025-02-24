@@ -216,36 +216,39 @@ class EditServiceVisit extends EditRecord
                 'payment_method' => PaymentMethod::WAITING_FOR_PAYMENT,
                 'status' => TransactionStatus::WAITING_FOR_PAYMENT,
             ];
-            $transactionExists = Transaction::where('client_visit_id', $record->id)->first();
-            if (!$transactionExists) {
-                $createdTransaction = Transaction::create($dataTransaction);
-                $dataTransactionItem = [
+            $transactionExists = Transaction::where('client_visit_id', $record->id)->get();
+            if (count($transactionExists) > 0) {
+                Transaction::where('client_visit_id', $record->id)
+                    ->update(['status' => TransactionStatus::CANCEL]);
+            }
+
+            $createdTransaction = Transaction::create($dataTransaction);
+            $dataTransactionItem = [
+                'transaction_id' => $createdTransaction->id,
+                'service_id' => $service->id,
+                'name' => $service->name,
+                'qty' => 1,
+                'price' => $service->price,
+                'is_additional' => 0,
+            ];
+            TransactionItem::create($dataTransactionItem);
+
+            if ($additionalCupingPoint > 0) {
+                $dataAdditionalTransactionItem = [
                     'transaction_id' => $createdTransaction->id,
                     'service_id' => $service->id,
-                    'name' => $service->name,
-                    'qty' => 1,
-                    'price' => $service->price,
-                    'is_additional' => 0,
+                    'name' => "Titik bekam tambahan (" . $service->name . ")",
+                    'qty' => $additionalCupingPoint,
+                    'price' => $additionalCuppingPointPrice,
+                    'is_additional' => 1,
                 ];
-                TransactionItem::create($dataTransactionItem);
+                TransactionItem::create($dataAdditionalTransactionItem);
+            }
 
-                if ($additionalCupingPoint > 0) {
-                    $dataAdditionalTransactionItem = [
-                        'transaction_id' => $createdTransaction->id,
-                        'service_id' => $service->id,
-                        'name' => "Titik bekam tambahan (" . $service->name . ")",
-                        'qty' => $additionalCupingPoint,
-                        'price' => $additionalCuppingPointPrice,
-                        'is_additional' => 1,
-                    ];
-                    TransactionItem::create($dataAdditionalTransactionItem);
-                }
+            $dataClientVisit['status'] = VisitStatus::WAITING_FOR_SERVICE;
 
-                $dataClientVisit['status'] = VisitStatus::WAITING_FOR_SERVICE;
-
-                if (in_array(Role::SUPER_ADMIN, Auth::user()->getRoleNames()->toArray())) {
-                    $dataClientVisit['therapy_id'] = $data['therapy_id'];
-                }
+            if (in_array(Role::SUPER_ADMIN, Auth::user()->getRoleNames()->toArray())) {
+                $dataClientVisit['therapy_id'] = $data['therapy_id'];
             }
 
             ClientVisit::where('id', $record->id)->update($dataClientVisit);
