@@ -18,6 +18,8 @@ class ViewUser extends ViewRecord
 {
     protected static string $resource = UserResource::class;
 
+    protected static string $view = 'filament.resources.user-resource.pages.view-user';
+
     public function infolist(Infolist $infolist): Infolist
     {
         return $infolist

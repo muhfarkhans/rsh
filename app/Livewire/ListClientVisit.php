@@ -29,13 +29,23 @@ class ListClientVisit extends Component implements HasForms, HasTable
     use InteractsWithTable;
     use InteractsWithForms;
 
-    public int $clientId;
+    public int $clientId = 0;
+
+    public int $therapyId = 0;
 
     public function table(Table $table): Table
     {
         return $table
             ->query(
-                ClientVisit::query()->where('client_id', $this->clientId)
+                ClientVisit::query()
+                    ->when(
+                        $this->clientId != 0,
+                        fn(Builder $query, $id): Builder => $query->where('client_id', '=', $this->clientId),
+                    )
+                    ->when(
+                        $this->therapyId != 0,
+                        fn(Builder $query, $id): Builder => $query->where('therapy_id', '=', $this->therapyId),
+                    )
             )
             ->columns([
                 TextColumn::make('index')
@@ -126,7 +136,7 @@ class ListClientVisit extends Component implements HasForms, HasTable
                         return User::with(['roles'])->whereHas('roles', function ($query) {
                             return $query->where('name', Role::THERAPIST);
                         })->get()->pluck('name', 'id');
-                    })
+                    })->visible(fn() => $this->therapyId == 0)
             ], layout: FiltersLayout::AboveContent)->filtersFormColumns(2)
             ->actions([
                 // Tables\Actions\EditAction::make(),
