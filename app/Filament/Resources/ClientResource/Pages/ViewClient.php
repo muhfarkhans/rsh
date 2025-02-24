@@ -18,14 +18,6 @@ class ViewClient extends ViewRecord
 
     protected static string $view = 'filament.resources.client-resource.pages.view-client';
 
-    function mutateFormDataBeforeFill(array $data): array
-    {
-        dd($this->record);
-        $clientVisit = ClientVisit::where('client_id', $this->record->id)->orderBy('created_at', 'desc')->get();
-
-        return $data;
-    }
-
     public function infolist(Infolist $infolist): Infolist
     {
         return $infolist
