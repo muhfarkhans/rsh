@@ -38,7 +38,9 @@ class ViewUser extends ViewRecord
                             ->schema([
                                 TextEntry::make('name')
                                     ->label('Nama Lengkap User')
-                                    ->columnSpanFull()
+                                    ->extraAttributes(FilamentHelper::textEntryExtraAttributes()),
+                                TextEntry::make('email')
+                                    ->label('Email User')
                                     ->extraAttributes(FilamentHelper::textEntryExtraAttributes()),
                                 TextEntry::make('phone')
                                     ->label('No. Telepon / HP')
