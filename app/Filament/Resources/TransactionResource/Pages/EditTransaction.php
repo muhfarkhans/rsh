@@ -6,6 +6,7 @@ use App\Constants\PaymentMethod;
 use App\Constants\TransactionStatus;
 use App\Constants\VisitStatus;
 use App\Filament\Resources\TransactionResource;
+use App\Models\ClientVisit;
 use App\Models\Transaction;
 use Filament\Actions;
 use Filament\Forms\Components\Actions\Action;
@@ -248,9 +249,19 @@ class EditTransaction extends EditRecord
                             return true;
                         }),
                     Select::make('status')
-                        ->label('Status')
+                        ->label('Status asas')
                         ->options(TransactionStatus::getLabels())
                         ->required()
+                        ->columnSpanFull(),
+                    Placeholder::make('createdBy.name')
+                        ->label('Cashier Name')
+                        ->visible(function ($state) {
+                            if ($state != null) {
+                                return true;
+                            } else {
+                                return false;
+                            }
+                        })
                         ->columnSpanFull(),
                     Placeholder::make('updated_at')
                         ->hiddenLabel()
@@ -266,8 +277,13 @@ class EditTransaction extends EditRecord
                         }),
                     \Filament\Forms\Components\Actions::make([
                         Action::make('Save')
-                            ->action(function ($livewire) {
+                            ->action(function ($livewire, $record, Get $get) {
                                 $livewire->save();
+
+                                if ($get('status') == TransactionStatus::PAID) {
+                                    ClientVisit::where('id', $record->clientVisit->id)->update(['status' => VisitStatus::DONE]);
+                                }
+
                                 $this->record->refresh();
                             })
                             ->disabled(function () {

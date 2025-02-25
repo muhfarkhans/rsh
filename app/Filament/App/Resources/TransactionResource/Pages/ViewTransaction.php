@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Resources\TransactionResource\Pages;
+namespace App\Filament\App\Resources\TransactionResource\Pages;
 
 use App\Constants\TransactionStatus;
 use App\Filament\Resources\TransactionResource;

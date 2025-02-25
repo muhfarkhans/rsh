@@ -4,6 +4,7 @@ namespace App\Providers\Filament;
 
 use App\Filament\App\Pages\Dashboard;
 use App\Filament\App\Pages\Login;
+use App\Filament\Resources\TransactionResource;
 use App\Livewire\LatestVisitors;
 use App\Livewire\StatsVisitor;
 use Filament\Http\Middleware\Authenticate;
@@ -11,6 +12,7 @@ use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Navigation\MenuItem;
+use Filament\Navigation\NavigationItem;
 use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
@@ -74,6 +76,12 @@ class AppPanelProvider extends PanelProvider
                     ->label('My Profile')
                     ->url(fn(): string => EditProfilePage::getUrl())
                     ->icon('heroicon-m-user-circle'),
+            ])
+            ->navigationItems([
+                NavigationItem::make('Transaction')
+                    ->url(fn() => TransactionResource::getUrl('index'))
+                    ->icon('heroicon-o-banknotes')
+                    ->sort(50),
             ])
             ->authMiddleware([
                 Authenticate::class,
