@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Constants\Role;
 use App\Filament\App\Pages\Dashboard;
 use App\Filament\App\Pages\Login;
 use App\Filament\Resources\TransactionResource;
@@ -79,6 +80,13 @@ class AppPanelProvider extends PanelProvider
             ])
             ->navigationItems([
                 NavigationItem::make('Transaction')
+                    ->visible(function () {
+                        if (in_array(Role::THERAPIST, Auth::user()->getRoleNames()->toArray())) {
+                            return false;
+                        }
+
+                        return true;
+                    })
                     ->url(fn() => TransactionResource::getUrl('index'))
                     ->icon('heroicon-o-banknotes')
                     ->sort(50),
