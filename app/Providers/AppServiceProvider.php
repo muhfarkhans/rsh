@@ -5,6 +5,7 @@ namespace App\Providers;
 use Filament\Support\Facades\FilamentAsset;
 use Filament\Support\Facades\FilamentView;
 use Filament\View\PanelsRenderHook;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\HtmlString;
 use Illuminate\Support\ServiceProvider;
 use Filament\Support\Assets\Css;
@@ -34,6 +35,11 @@ class AppServiceProvider extends ServiceProvider
         FilamentView::registerRenderHook(
             name: PanelsRenderHook::HEAD_START,
             hook: fn() => new HtmlString('<meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">'),
+        );
+
+        FilamentView::registerRenderHook(
+            PanelsRenderHook::USER_MENU_BEFORE,
+            fn(): string => Blade::render('<livewire:panel-shortcuts />'),
         );
 
         if (str(config('app.url'))->startsWith('https://') || app()->environment('production')) {
