@@ -133,9 +133,25 @@ class ListPayroll extends Component implements HasForms, HasTable
             ->headerActions([
                 ExportAction::make()->exports([
                     ExcelExport::make()->withColumns([
-                        Column::make('created_at')
-                            ->heading('Created At'),
-                    ])->withFilename(date('Y-m-d') . '-Payroll'),
+                        Column::make('name')
+                            ->heading('Nama'),
+                        Column::make('commision')
+                            ->heading('Komisi'),
+                        Column::make('total_service')
+                            ->heading('Total Service'),
+                    ])
+                        ->modifyQueryUsing(fn($query) => $query->select('users.id', 'users.name')
+                            ->selectRaw('sum(services.commision) AS commision')
+                            ->selectRaw('count(client_visits.id) AS total_service')
+                            ->join('model_has_roles', 'model_has_roles.model_id', '=', 'users.id')
+                            ->join('client_visits', 'client_visits.therapy_id', '=', 'users.id')
+                            ->join('transactions', 'transactions.client_visit_id', '=', 'client_visits.id')
+                            ->join('client_visit_cuppings', 'client_visit_cuppings.client_visit_id', '=', 'client_visits.id')
+                            ->join('services', 'services.id', '=', 'client_visit_cuppings.service_id')
+                            ->where('model_has_roles.role_id', 2)
+                            ->where('transactions.status', 'paid')
+                            ->groupBy('users.id', 'users.name'))
+                        ->withFilename(date('Y-m-d') . '-Payroll'),
                 ]),
             ])
             ->bulkActions([
