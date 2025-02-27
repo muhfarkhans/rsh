@@ -4,11 +4,13 @@ namespace App\Filament\App\Resources\VisitResource\Pages;
 
 use App\Constants\Role as ConstRole;
 use App\Constants\VisitStatus;
+use App\Filament\App\Resources\TransactionResource;
 use App\Filament\App\Resources\VisitResource;
 use App\Helpers\FilamentHelper;
 use App\Models\ClientVisit;
 use App\Models\Client;
 use App\Models\User;
+use Auth;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Filament\Forms;
@@ -121,140 +123,144 @@ class ViewVisit extends ViewRecord
                             ])
                             ->columns(2)
                             ->columnSpan(2),
-                        Section::make('Pilih layanan')
-                            ->description('Tentukan layanan yang diinginkan')
-                            ->schema([
-                                \Filament\Infolists\Components\Actions::make([
-                                    Action::make('cuppingpoint')
-                                        ->url(function (ClientVisit $record) {
-                                            return VisitResource::getUrl('edit-service', ['record' => $record]);
-                                        })
-                                        ->label(function (ClientVisit $record) {
-                                            if ($record->clientVisitCupping != null) {
-                                                return 'Edit dan Lihat Layanan';
-                                            } else {
-                                                return 'Check Up dan Pilih Layanan';
-                                            }
-                                        })
-                                        ->color('success')
-                                        ->icon('heroicon-m-map-pin')
-                                        ->iconPosition(IconPosition::After)
-                                    // ->hidden(function (ClientVisit $record) {
-                                    //     // if ($record->clientVisitCupping != null) {
-                                    //     //     return 'Update Layanan';
-                                    //     // } else {
-                                    //     //     return false;
-                                    //     // }
+                        Grid::make(1)->schema([
+                            Section::make('Pilih layanan')
+                                ->description('Tentukan layanan yang diinginkan')
+                                ->schema([
+                                    \Filament\Infolists\Components\Actions::make([
+                                        Action::make('cuppingpoint')
+                                            ->url(function (ClientVisit $record) {
+                                                return VisitResource::getUrl('edit-service', ['record' => $record]);
+                                            })
+                                            ->label(function (ClientVisit $record) {
+                                                if ($record->clientVisitCupping != null) {
+                                                    return 'Edit dan Lihat Layanan';
+                                                } else {
+                                                    return 'Check Up dan Pilih Layanan';
+                                                }
+                                            })
+                                            ->color('success')
+                                            ->icon('heroicon-m-map-pin')
+                                            ->iconPosition(IconPosition::After)
+                                    ])->fullWidth(),
+                                    \Filament\Infolists\Components\Actions::make([
+                                        Action::make('viewcuppingpoint')
+                                            ->label('Mulai Layanan')
+                                            ->color('info')
+                                            ->iconPosition(IconPosition::After)
+                                            ->hidden(function (ClientVisit $record) {
+                                                if ($record->clientVisitCupping === null) {
+                                                    return true;
+                                                }
 
-                                    //     return false;
-                                    //     // return !($record->status == VisitStatus::WAITING_FOR_SERVICE);
-                                    // })
-                                ])->fullWidth(),
-                                \Filament\Infolists\Components\Actions::make([
-                                    Action::make('viewcuppingpoint')
-                                        ->label('Mulai Layanan')
-                                        ->color('info')
-                                        ->iconPosition(IconPosition::After)
-                                        ->hidden(function (ClientVisit $record) {
-                                            if ($record->clientVisitCupping === null) {
-                                                return true;
-                                            }
+                                                return !($record->status == VisitStatus::WAITING_FOR_SERVICE);
+                                            })
+                                            ->action(function (ClientVisit $record, array $data) {
+                                                DB::transaction(function () use ($record, $data) {
+                                                    ClientVisit::where('id', $record->id)
+                                                        ->update([
+                                                            'status' => VisitStatus::ON_SERVICE,
+                                                            'started_at' => now(),
+                                                        ]);
+                                                });
 
-                                            return !($record->status == VisitStatus::WAITING_FOR_SERVICE);
-                                        })
-                                        ->action(function (ClientVisit $record, array $data) {
-                                            DB::transaction(function () use ($record, $data) {
-                                                ClientVisit::where('id', $record->id)
-                                                    ->update([
-                                                        'status' => VisitStatus::ON_SERVICE,
-                                                        'started_at' => now(),
-                                                    ]);
-                                            });
+                                                Notification::make()
+                                                    ->title('Layanan dimulai')
+                                                    ->success()
+                                                    ->send();
 
-                                            Notification::make()
-                                                ->title('Layanan dimulai')
-                                                ->success()
-                                                ->send();
+                                                $this->record->refresh();
+                                            }),
+                                    ])->fullWidth(),
+                                    \Filament\Infolists\Components\Actions::make([
+                                        Action::make('viewcuppingpoint')
+                                            ->label('Selesaikan Layanan')
+                                            ->color('danger')
+                                            ->iconPosition(IconPosition::After)
+                                            ->hidden(function (ClientVisit $record) {
+                                                if ($record->clientVisitCupping === null) {
+                                                    return true;
+                                                }
 
-                                            $this->record->refresh();
-                                        }),
-                                ])->fullWidth(),
-                                \Filament\Infolists\Components\Actions::make([
-                                    Action::make('viewcuppingpoint')
-                                        ->label('Selesaikan Layanan')
-                                        ->color('danger')
-                                        ->iconPosition(IconPosition::After)
-                                        ->hidden(function (ClientVisit $record) {
-                                            if ($record->clientVisitCupping === null) {
-                                                return true;
-                                            }
+                                                return !($record->status == VisitStatus::ON_SERVICE);
+                                            })
+                                            ->action(function (ClientVisit $record, array $data) {
+                                                DB::transaction(function () use ($record, $data) {
+                                                    ClientVisit::where('id', $record->id)
+                                                        ->update([
+                                                            'status' => VisitStatus::WAITING_FOR_PAYMENT,
+                                                            'ended_at' => now(),
+                                                        ]);
+                                                });
 
-                                            return !($record->status == VisitStatus::ON_SERVICE);
-                                        })
-                                        ->action(function (ClientVisit $record, array $data) {
-                                            DB::transaction(function () use ($record, $data) {
-                                                ClientVisit::where('id', $record->id)
-                                                    ->update([
-                                                        'status' => VisitStatus::WAITING_FOR_PAYMENT,
-                                                        'ended_at' => now(),
-                                                    ]);
-                                            });
+                                                Notification::make()
+                                                    ->title('Layanan selesai')
+                                                    ->success()
+                                                    ->send();
 
-                                            Notification::make()
-                                                ->title('Layanan selesai')
-                                                ->success()
-                                                ->send();
+                                                $this->record->refresh();
+                                            }),
+                                    ])->fullWidth(),
+                                    \Filament\Infolists\Components\Actions::make([
+                                        Action::make('viewcuppingpoint')
+                                            ->url(function (ClientVisit $record) {
+                                                if ($record->clientVisitCupping) {
+                                                    return route('filament.app.resources.cuppings.cupping-point', ['record' => $record->clientVisitCupping]);
+                                                } else {
+                                                    return '';
+                                                }
+                                            })
+                                            ->label('Lihat titik bekam')
+                                            ->color('info')
+                                            ->icon('heroicon-m-map-pin')
+                                            ->iconPosition(IconPosition::After)
+                                            ->hidden(function (ClientVisit $record) {
+                                                if ($record->clientVisitCupping === null) {
+                                                    return true;
+                                                }
 
-                                            $this->record->refresh();
-                                        }),
-                                ])->fullWidth(),
-                                \Filament\Infolists\Components\Actions::make([
-                                    Action::make('viewcuppingpoint')
-                                        ->url(function (ClientVisit $record) {
-                                            if ($record->clientVisitCupping) {
-                                                return route('filament.app.resources.cuppings.cupping-point', ['record' => $record->clientVisitCupping]);
-                                            } else {
-                                                return '';
-                                            }
-                                        })
-                                        ->label('Lihat titik bekam')
-                                        ->color('info')
-                                        ->icon('heroicon-m-map-pin')
-                                        ->iconPosition(IconPosition::After)
-                                        ->hidden(function (ClientVisit $record) {
-                                            if ($record->clientVisitCupping === null) {
-                                                return true;
-                                            }
+                                                return $record->clientVisitCupping->service->is_cupping === 0;
+                                            }),
+                                    ])->fullWidth(),
+                                    \Filament\Infolists\Components\Actions::make([
+                                        Action::make('viewcuppingpoint')
+                                            ->url(function (ClientVisit $record) {
+                                                return url('') . '/pdf/12';
+                                            })
+                                            ->label('Generate PDF')
+                                            ->color('info')
+                                            ->icon('heroicon-m-document-arrow-down')
+                                            ->iconPosition(IconPosition::After),
+                                    ])->fullWidth(),
+                                ])
+                                ->columnSpan(1),
+                            Section::make('Detail Invoice')
+                                ->description('Informasi tagihan transaksi')
+                                ->schema([
+                                    \Filament\Infolists\Components\Actions::make([
+                                        Action::make('info_invoice')
+                                            ->url(function (ClientVisit $record) {
+                                                return TransactionResource::getUrl('view', ['record' => $record->transactions->last()]);
+                                            })
+                                            ->label(function (ClientVisit $record) {
+                                                return "Invoice " . $record->transactions->last()->invoice_id;
+                                            })
+                                            ->color('info')
+                                    ])->fullWidth(),
+                                ])
+                                ->hidden(function (ClientVisit $record) {
+                                    if (in_array(ConstRole::THERAPIST, Auth::user()->getRoleNames()->toArray())) {
+                                        return false;
+                                    }
 
-                                            return $record->clientVisitCupping->service->is_cupping === 0;
-                                        }),
-                                ])->fullWidth(),
-                                \Filament\Infolists\Components\Actions::make([
-                                    Action::make('viewcuppingpoint')
-                                        ->url(function (ClientVisit $record) {
-                                            return url('') . '/pdf/12';
-                                        })
-                                        ->label('Generate PDF')
-                                        ->color('info')
-                                        ->icon('heroicon-m-document-arrow-down')
-                                        ->iconPosition(IconPosition::After),
-                                ])->fullWidth(),
-                                // \Filament\Infolists\Components\Actions::make([
-                                //     Action::make('viewcuppingpoint')
-                                //         ->label('Generate PDF')
-                                //         ->color('info')
-                                //         ->icon('heroicon-m-document-arrow-down')
-                                //         ->iconPosition(IconPosition::After)
-                                //         ->action(function (Model $record) {
-                                //             return response()->streamDownload(function () use ($record) {
-                                //                 echo Pdf::loadHtml(
-                                //                     Blade::render('pdf', ['view' => $record])
-                                //                 )->stream();
-                                //             }, $record->id . '.pdf');
-                                //         })
-                                // ])->fullWidth()
-                            ])
-                            ->columnSpan(1),
+                                    if ($record->transaction == null) {
+                                        return true;
+                                    }
+
+                                    return false;
+                                })
+                                ->columnSpan(1),
+                        ])->columnSpan(1),
                         Section::make('Riwayat Penyakit')
                             ->schema([
                                 TextEntry::make('complaint')

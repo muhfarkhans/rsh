@@ -16,6 +16,7 @@ class TransactionDiscount extends Model
         'discount_id',
         'name',
         'discount',
+        'code',
     ];
 
     public function transaction()

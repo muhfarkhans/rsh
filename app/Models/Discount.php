@@ -15,6 +15,7 @@ class Discount extends Model
     protected $fillable = [
         'created_by',
         'name',
+        'code',
         'discount',
         'is_active',
     ];

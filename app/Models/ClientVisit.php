@@ -78,4 +78,9 @@ class ClientVisit extends Model
     {
         return $this->belongsTo(Transaction::class, 'id', 'client_visit_id');
     }
+
+    public function transactions(): HasMany
+    {
+        return $this->hasMany(Transaction::class, 'client_visit_id', 'id');
+    }
 }

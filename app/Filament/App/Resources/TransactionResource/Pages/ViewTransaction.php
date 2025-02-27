@@ -2,8 +2,10 @@
 
 namespace App\Filament\App\Resources\TransactionResource\Pages;
 
+use App\Constants\PaymentMethod;
 use App\Constants\TransactionStatus;
 use App\Filament\Resources\TransactionResource;
+use App\Models\Transaction;
 use Filament\Actions;
 use Filament\Infolists\Components\Grid;
 use Filament\Infolists\Components\RepeatableEntry;
@@ -13,6 +15,7 @@ use Filament\Infolists\Infolist;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Support\Enums\FontWeight;
 use Illuminate\Support\HtmlString;
+use Filament\Infolists\Components\Actions\Action;
 
 class ViewTransaction extends ViewRecord
 {
@@ -24,6 +27,14 @@ class ViewTransaction extends ViewRecord
             ->schema([
                 Grid::make()->columns(3)->schema([
                     Section::make('Informasi pembayaran')
+                        ->headerActions([
+                            Action::make('edit')
+                                ->label('Bayar')
+                                ->icon('heroicon-o-pencil')
+                                ->url(function (Transaction $record) {
+                                    return TransactionResource::getUrl('edit', ['record' => $record]);
+                                })
+                        ])
                         ->description('Informasi client dan layanan')
                         ->schema([
                             Grid::make()->columns(2)->schema([
@@ -122,6 +133,22 @@ class ViewTransaction extends ViewRecord
                         TextEntry::make('payment_method')
                             ->label('Metode Pembayaran')
                             ->badge()
+                            ->color(function ($record) {
+                                return match ($record->status) {
+                                    PaymentMethod::WAITING_FOR_PAYMENT => 'success',
+                                    PaymentMethod::CASH => 'info',
+                                    PaymentMethod::QRIS => 'info',
+                                    default => 'secondary',
+                                };
+                            })
+                            ->getStateUsing(function ($record) {
+                                return match ($record->status) {
+                                    PaymentMethod::WAITING_FOR_PAYMENT => 'Menunggu pembayaran',
+                                    PaymentMethod::CASH => 'Cash',
+                                    PaymentMethod::QRIS => 'Qris',
+                                    default => '-',
+                                };
+                            })
                             ->columnSpanFull(),
                         TextEntry::make('status')
                             ->label('Status')

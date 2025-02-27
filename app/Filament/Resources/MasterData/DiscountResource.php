@@ -46,6 +46,10 @@ class DiscountResource extends Resource
                     ->label('Nama')
                     ->searchable()
                     ->sortable(),
+                TextColumn::make('code')
+                    ->label('Kode')
+                    ->searchable()
+                    ->sortable(),
                 TextColumn::make('discount')
                     ->label('Diskon')
                     ->formatStateUsing(fn(string $state): string => __(Helper::rupiah($state)))
@@ -106,6 +110,12 @@ class DiscountResource extends Resource
                 ->label('Nama diskon')
                 ->placeholder('Isi nama diskon')
                 ->required()
+                ->columnSpanFull(),
+            TextInput::make('code')
+                ->label('Kode')
+                ->placeholder('Isi kode')
+                ->required()
+                ->unique(ignoreRecord: true)
                 ->columnSpanFull(),
             TextInput::make('discount')
                 ->label('Harga diskon')

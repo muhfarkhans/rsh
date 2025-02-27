@@ -17,6 +17,7 @@ class Transaction extends Model
         'created_by',
         'invoice_id',
         'amount',
+        'total_discount',
         'payment_method',
         'status',
         'photo',
@@ -30,6 +31,11 @@ class Transaction extends Model
     public function createdBy()
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function discount()
+    {
+        return $this->belongsTo(TransactionDiscount::class, 'id', 'transaction_id');
     }
 
     public function items()

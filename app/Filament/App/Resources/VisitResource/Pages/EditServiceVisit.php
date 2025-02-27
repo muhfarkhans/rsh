@@ -213,6 +213,7 @@ class EditServiceVisit extends EditRecord
                 'created_by' => Auth::user()->id,
                 'invoice_id' => "INV" . str_pad($totalTransaction + 1, 5, 0, STR_PAD_LEFT),
                 'amount' => $amount,
+                'total_discount' => 0,
                 'payment_method' => PaymentMethod::WAITING_FOR_PAYMENT,
                 'status' => TransactionStatus::WAITING_FOR_PAYMENT,
             ];

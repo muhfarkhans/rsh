@@ -48,7 +48,7 @@ class AppPanelProvider extends PanelProvider
             ->login(Login::class)
             ->widgets([
                 StatsVisitor::class,
-                LatestVisitors::class,
+                // LatestVisitors::class,
             ])
             ->topNavigation()
             ->middleware([

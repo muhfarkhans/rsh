@@ -174,7 +174,7 @@ class CreateVisit extends CreateRecord
                             ->label('Nomor Registrasi')
                             ->columnSpan(2),
                         \Filament\Forms\Components\Actions::make([
-                            Action::make('Generate excerpt')
+                            Action::make('search_visit')
                                 ->label('Cari')
                                 ->action(function (Get $get, Set $set) {
                                     $this->serachRegId($get('reg_id'), $set);

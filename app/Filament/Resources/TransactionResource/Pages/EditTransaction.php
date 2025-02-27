@@ -7,7 +7,9 @@ use App\Constants\TransactionStatus;
 use App\Constants\VisitStatus;
 use App\Filament\Resources\TransactionResource;
 use App\Models\ClientVisit;
+use App\Models\Discount;
 use App\Models\Transaction;
+use App\Models\TransactionDiscount;
 use Filament\Actions;
 use Filament\Forms\Components\Actions\Action;
 use Filament\Forms\Components\FileUpload;
@@ -19,7 +21,10 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
+use Filament\Forms\Set;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\HtmlString;
 
 class EditTransaction extends EditRecord
@@ -46,9 +51,12 @@ class EditTransaction extends EditRecord
     {
         $client = $this->record->clientVisit->client;
         $items = $this->record->items;
+        $discount = $this->record->discount;
         $clientServices = [];
         $totalPriceService = 0;
         $totalPriceAdditionalService = 0;
+
+        // dd($this->record, $this->record->discount);
 
         foreach ($items as $key => $item) {
             if ($item->is_additional == 0) {
@@ -96,6 +104,13 @@ class EditTransaction extends EditRecord
         $data['total_services'] = $totalPriceService;
         $data['total_additional'] = $totalPriceAdditionalService;
 
+        if ($discount != null) {
+            $data['discount'] = $discount->discount;
+            $data['total_discount'] = $this->record->total_discount;
+            $data['discount_code_used'] = $discount->code;
+            $data['total'] = $this->record->amount;
+        }
+
         if ($data['payment_method'] == PaymentMethod::WAITING_FOR_PAYMENT) {
             unset($data['payment_method']);
         }
@@ -105,6 +120,39 @@ class EditTransaction extends EditRecord
         }
 
         return $data;
+    }
+
+    protected function serachDiscount(string|null $code, Set $set, Get $get)
+    {
+        try {
+            $discount = Discount::where('code', $code)->firstOrFail();
+
+            $set('discount', $discount->discount);
+            $set('total_discount', $discount->discount);
+            $set('discount_code', '');
+            $set('discount_code_used', $code);
+
+            $set('total', $get('total') - $discount->discount);
+
+            Notification::make()
+                ->title('Discount ditemukan')
+                ->success()
+                ->body('Form berhasil diisi otomatis.')
+                ->send();
+        } catch (\Throwable $th) {
+            $set('discount', 0);
+            $set('total_discount', 0);
+            $set('discount_code', '');
+            $set('discount_code_used', '');
+
+            $set('total', $get('total') - $get('discount'));
+
+            Notification::make()
+                ->title('Discount tidak ditemukan')
+                ->warning()
+                ->body('Mohon isi form secara manual.')
+                ->send();
+        }
     }
 
     public function form(Form $form): Form
@@ -211,6 +259,17 @@ class EditTransaction extends EditRecord
                                 '
                             );
                         })->columnSpanFull(),
+                    Placeholder::make('discount')
+                        ->label('Diskon')
+                        ->inlineLabel()
+                        ->extraAttributes(['style' => 'text-align: right; color: red'])
+                        ->content(function ($state) {
+                            return new HtmlString(
+                                '
+                                <h1>' . number_format($state, 0, ',', '.') . '</h1>
+                                '
+                            );
+                        })->columnSpanFull(),
                     Placeholder::make('total')
                         ->label('Total')
                         ->inlineLabel()
@@ -222,11 +281,64 @@ class EditTransaction extends EditRecord
                                 '
                             );
                         })->columnSpanFull(),
+                    TextInput::make('discount_code')
+                        ->label('Kode Promo atau Diskon')
+                        ->hidden(function () {
+                            if ($this->record->status == TransactionStatus::PAID) {
+                                return true;
+                            } else {
+                                return false;
+                            }
+                        })
+                        ->columnSpanFull(),
+                    TextInput::make('discount_code_used')
+                        ->hidden()
+                        ->columnSpanFull(),
+                    TextInput::make('total_discount')
+                        ->hidden()
+                        ->columnSpanFull(),
+                    \Filament\Forms\Components\Actions::make([
+                        Action::make('check_discount')
+                            ->label('Cek Kode Promo atau Diskon')
+                            ->action(function (Get $get, Set $set) {
+                                $this->serachDiscount($get('discount_code'), $set, $get);
+                            }),
+                        Action::make('remove_discount')
+                            ->label('Hapus Diskon')
+                            ->color('danger')
+                            ->action(function (Get $get, Set $set) {
+                                $set('total', $get('total') + $get('discount'));
+
+                                $set('discount', 0);
+                                $set('total_discount', 0);
+                                $set('discount_code', '');
+                                $set('discount_code_used', '');
+
+                                Notification::make()
+                                    ->title('Discount dihapus')
+                                    ->success()
+                                    ->body('Form berhasil diisi otomatis.')
+                                    ->send();
+                            })
+                    ])->fullWidth()->hidden(function () {
+                        if ($this->record->status == TransactionStatus::PAID) {
+                            return true;
+                        } else {
+                            return false;
+                        }
+                    }),
                     Select::make('payment_method')
                         ->label('Metode Pembayaran')
                         ->options(PaymentMethod::getLabels())
                         ->required()
                         ->live()
+                        ->disabled(function () {
+                            if ($this->record->status == TransactionStatus::PAID) {
+                                return true;
+                            } else {
+                                return false;
+                            }
+                        })
                         ->columnSpanFull(),
                     FileUpload::make('photo')
                         ->directory('transactions')
@@ -239,6 +351,13 @@ class EditTransaction extends EditRecord
 
                             return false;
                         })
+                        ->disabled(function () {
+                            if ($this->record->status == TransactionStatus::PAID) {
+                                return true;
+                            } else {
+                                return false;
+                            }
+                        })
                         ->hidden(condition: function (Get $get) {
                             $paymentMethod = $get('payment_method');
 
@@ -249,9 +368,16 @@ class EditTransaction extends EditRecord
                             return true;
                         }),
                     Select::make('status')
-                        ->label('Status asas')
+                        ->label('Status')
                         ->options(TransactionStatus::getLabels())
                         ->required()
+                        ->disabled(function () {
+                            if ($this->record->status == TransactionStatus::PAID) {
+                                return true;
+                            } else {
+                                return false;
+                            }
+                        })
                         ->columnSpanFull(),
                     Placeholder::make('createdBy.name')
                         ->label('Cashier Name')
@@ -277,17 +403,39 @@ class EditTransaction extends EditRecord
                         }),
                     \Filament\Forms\Components\Actions::make([
                         Action::make('Save')
+                            ->label(function () {
+                                if ($this->record->status == TransactionStatus::PAID) {
+                                    return "Sudah dibayarkan";
+                                } else {
+                                    return "Bayar";
+                                }
+                            })
                             ->action(function ($livewire, $record, Get $get) {
                                 $livewire->save();
 
-                                if ($get('status') == TransactionStatus::PAID) {
-                                    ClientVisit::where('id', $record->clientVisit->id)->update(['status' => VisitStatus::DONE]);
-                                }
+                                DB::transaction(function () use ($get, $record) {
+                                    if ($get('status') == TransactionStatus::PAID) {
+                                        ClientVisit::where('id', $record->clientVisit->id)->update(['status' => VisitStatus::DONE]);
+                                    }
+
+                                    if ($get('discount') != null) {
+                                        $discount = Discount::where('code', $get('discount_code_used'))->first();
+                                        TransactionDiscount::create([
+                                            'transaction_id' => $record->id,
+                                            'discount_id' => $discount->id,
+                                            'name' => $discount->name,
+                                            'discount' => $discount->discount,
+                                            'code' => $discount->code,
+                                        ]);
+
+                                        Transaction::where('id', $record->id)->update(['amount' => $record->amount - $discount->discount]);
+                                    }
+                                });
 
                                 $this->record->refresh();
                             })
                             ->disabled(function () {
-                                if ($this->record->clientVisit->status != VisitStatus::WAITING_FOR_PAYMENT) {
+                                if ($this->record->status == TransactionStatus::PAID) {
                                     return true;
                                 } else {
                                     return false;
