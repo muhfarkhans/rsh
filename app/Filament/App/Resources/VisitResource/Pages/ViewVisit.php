@@ -222,16 +222,16 @@ class ViewVisit extends ViewRecord
                                                 return $record->clientVisitCupping->service->is_cupping === 0;
                                             }),
                                     ])->fullWidth(),
-                                    \Filament\Infolists\Components\Actions::make([
-                                        Action::make('viewcuppingpoint')
-                                            ->url(function (ClientVisit $record) {
-                                                return url('') . '/pdf/12';
-                                            })
-                                            ->label('Generate PDF')
-                                            ->color('info')
-                                            ->icon('heroicon-m-document-arrow-down')
-                                            ->iconPosition(IconPosition::After),
-                                    ])->fullWidth(),
+                                    // \Filament\Infolists\Components\Actions::make([
+                                    //     Action::make('viewcuppingpoint')
+                                    //         ->url(function (ClientVisit $record) {
+                                    //             return url('') . '/pdf/12';
+                                    //         })
+                                    //         ->label('Generate PDF')
+                                    //         ->color('info')
+                                    //         ->icon('heroicon-m-document-arrow-down')
+                                    //         ->iconPosition(IconPosition::After),
+                                    // ])->fullWidth(),
                                 ])
                                 ->columnSpan(1),
                             Section::make('Detail Invoice')
