@@ -10,12 +10,13 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      - name: Install SSH Client
-        run: sudo apt-get install -y openssh-client
-
-      - name: Deploy to Server
-        run: |
-          sshpass -p "${{ secrets.PW_HOSTING }}" ssh -o StrictHostKeyChecking=no -p ${{ secrets.PORT_HOSTING }} ${{ secrets.USER_HOSTING }}@${{ secrets.DOMAIN_HOSTING }} << 'EOF'
-          cd /home/rshincar/admin.rshincaresurabaya.com
-          git pull https://github.com/muhfarkhans/rsh.git       
-          EOF
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.DOMAIN_HOSTING }}
+          username: ${{ secrets.USER_HOSTING }}
+          password: ${{ secrets.PW_HOSTING }}
+          port: ${{ secrets.PORT_HOSTING }}
+          script: |
+            cd /home/rshincar/admin.rshincaresurabaya.com
+            git pull origin main
