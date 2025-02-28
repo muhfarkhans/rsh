@@ -5,6 +5,8 @@ namespace App\Filament\App\Resources\VisitResource\Pages;
 use App\Constants\Role;
 use App\Constants\VisitStatus;
 use App\Filament\App\Resources\VisitResource;
+use App\Jobs\EmailNewVisitJob;
+use App\Mail\EmailNewVisit;
 use App\Models\Client;
 use App\Models\ClientVisit;
 use App\Models\ClientVisitCheck;
@@ -33,6 +35,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\HtmlString;
+use Mail;
 
 
 class CreateVisit extends CreateRecord
@@ -55,7 +58,7 @@ class CreateVisit extends CreateRecord
 
     protected function handleRecordCreation(array $data): Model
     {
-        return DB::transaction(function () use ($data) {
+        $transaction = DB::transaction(function () use ($data) {
             $totalClient = Client::count();
             $clientExists = Client::where('reg_id', $data['reg_id'])->first();
             $startOfYear = Carbon::create($data['year'], 1, 1)->startOfYear();
@@ -109,6 +112,28 @@ class CreateVisit extends CreateRecord
 
             return $createdClientVisit;
         });
+
+        if (isset($transaction['client_id'])) {
+            $clientVisit = ClientVisit::where('id', $transaction->id)->first();
+            // Mail::to('ventuyven@gmail.com')->send(new EmailNewVisit([
+            //     'client_reg_id' => $clientVisit->client->reg_id,
+            //     'client_name' => $clientVisit->client->name,
+            //     'client_service' => '-',
+            //     'client_therapist' => $clientVisit->therapy->name,
+            //     'client_created_at' => $clientVisit->created_at,
+            // ]));
+            $emailPayload = [
+                'client_reg_id' => $clientVisit->client->reg_id,
+                'client_name' => $clientVisit->client->name,
+                'client_service' => '-',
+                'client_therapist' => $clientVisit->therapy->name,
+                'client_created_at' => $clientVisit->created_at,
+            ];
+
+            dispatch(new EmailNewVisitJob($emailPayload));
+        }
+
+        return $transaction;
     }
 
     protected function serachRegId(string|null $regId, Set $set)
