@@ -2,19 +2,20 @@ name: DEPLOY TO SERVER
 
 on: [push, pull_request]
 
-
 jobs:
-  web-deploy:
-    name: 🎉 Deploy website
+  deploy:
     runs-on: ubuntu-latest
+
     steps:
-    # Checkout the repository
-    - name: 🚚 Get latest code
-      uses: actions/checkout@v4
-    # sync files via FTP
-    - name: 📂 Sync files via FTP
-      uses: SamKirkland/FTP-Deploy-Action@v4.3.4
-      with:
-        server: ${{ secrets.FTP_SERVER }}
-        username: ${{ secrets.FTP_USER }}
-        password: ${{ secrets.FTP_PASSWORD }}
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Install SSH Client
+        run: sudo apt-get install -y openssh-client
+
+      - name: Deploy to Server
+        run: |
+          sshpass -p "${{ secrets.PW_HOSTING }}" ssh -o StrictHostKeyChecking=no -p ${{ secrets.PORT_HOSTING }} ${{ secrets.USER_HOSTING }}@${{ secrets.DOMAIN_HOSTING }} << 'EOF'
+          cd /home/rshincar/admin.rshincaresurabaya.com
+          git pull https://github.com/muhfarkhans/rsh.git       
+          EOF
