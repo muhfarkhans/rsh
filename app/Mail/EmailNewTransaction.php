@@ -9,7 +9,7 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class EmailNewVisit extends Mailable
+class EmailNewTransaction extends Mailable
 {
     use Queueable, SerializesModels;
 
@@ -41,7 +41,7 @@ class EmailNewVisit extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: 'email.new-visit',
+            view: 'email.new-transaction',
         );
     }
 

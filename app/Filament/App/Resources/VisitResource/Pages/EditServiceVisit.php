@@ -579,8 +579,9 @@ class EditServiceVisit extends EditRecord
                         Placeholder::make('toc')
                             ->hiddenLabel()
                             ->content(function (Get $get) {
+                                $serviceName = Service::where('id', $get('service_id'))->first()->name ?? "";
                                 return new HtmlString(
-                                    '<p><strong>' . $this->record->client->name . '<sup>1</sup></strong> dengan ini setuju untuk mendapatkan terapi bekam <strong>' . $get('service_id') . '<sup>2</sup></strong> untuk <strong>' . $this->record->client->name . '<sup>3</sup></strong>(<strong>' . $get('client_relation_as') . '<sup>4</sup></strong>) menyatakan bahwa : </p>
+                                    '<p><strong>' . $this->record->client->name . '<sup>1</sup></strong> dengan ini setuju untuk mendapatkan terapi bekam <strong>' . $serviceName . '<sup>2</sup></strong> untuk <strong>' . $this->record->client->name . '<sup>3</sup></strong>(<strong>' . $get('client_relation_as') . '<sup>4</sup></strong>) menyatakan bahwa : </p>
                                     <ul style="margin-left: 20px; margin-top: 20px">
                                         <li style="list-style-type: circle">Saya dengan sadar meminta untuk dilakukan Tindakan bekam.</li>
                                         <li style="list-style-type: circle">Saya memahami prosedur tindakan bekam yang akan dilakukan serta efek sampingnya.</li>

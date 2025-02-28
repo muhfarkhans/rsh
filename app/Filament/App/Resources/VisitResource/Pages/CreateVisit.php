@@ -115,22 +115,29 @@ class CreateVisit extends CreateRecord
 
         if (isset($transaction['client_id'])) {
             $clientVisit = ClientVisit::where('id', $transaction->id)->first();
-            // Mail::to('ventuyven@gmail.com')->send(new EmailNewVisit([
-            //     'client_reg_id' => $clientVisit->client->reg_id,
-            //     'client_name' => $clientVisit->client->name,
-            //     'client_service' => '-',
-            //     'client_therapist' => $clientVisit->therapy->name,
-            //     'client_created_at' => $clientVisit->created_at,
-            // ]));
             $emailPayload = [
                 'client_reg_id' => $clientVisit->client->reg_id,
                 'client_name' => $clientVisit->client->name,
-                'client_service' => '-',
+                'client_service' => "",
+                'client_service_price' => "",
+                'client_service_commision' => "",
+                'client_service_is_cupping' => "",
+                'client_service_started_at' => "",
+                'client_service_finished_at' => "",
+                'client_service_status' => "",
                 'client_therapist' => $clientVisit->therapy->name,
                 'client_created_at' => $clientVisit->created_at,
             ];
 
-            dispatch(new EmailNewVisitJob($emailPayload));
+            $idSuperAdmin = DB::table('roles')->where('name', Role::SUPER_ADMIN)->first()->id;
+            $users = User::join('model_has_roles', 'model_has_roles.model_id', '=', 'users.id')
+                ->where('model_has_roles.role_id', $idSuperAdmin)
+                ->where('users.is_active', 1)
+                ->get();
+
+            foreach ($users as $key => $admin) {
+                dispatch(new EmailNewVisitJob($emailPayload, $admin->email));
+            }
         }
 
         return $transaction;
@@ -148,6 +155,7 @@ class CreateVisit extends CreateRecord
             $set('job', $client->job);
             $set('address', $client->address);
             $set('client_found', 1);
+            $set('year', date('Y', strtotime($client->birthdate)));
 
             $clientVisit = ClientVisit::where('client_id', $client->id)->orderBy('created_at', 'desc')->get();
 
@@ -267,7 +275,6 @@ class CreateVisit extends CreateRecord
                                 return $query->where('name', Role::THERAPIST);
                             })->get()->pluck('name', 'id');
                         })
-                        ->live()
                         ->required()
                         ->searchable()
                         ->preload()

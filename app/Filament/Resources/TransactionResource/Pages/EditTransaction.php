@@ -3,13 +3,17 @@
 namespace App\Filament\Resources\TransactionResource\Pages;
 
 use App\Constants\PaymentMethod;
+use App\Constants\Role;
 use App\Constants\TransactionStatus;
 use App\Constants\VisitStatus;
 use App\Filament\Resources\TransactionResource;
+use App\Jobs\EmailNewTransactionJob;
+use App\Models\User;
 use App\Models\ClientVisit;
 use App\Models\Discount;
 use App\Models\Transaction;
 use App\Models\TransactionDiscount;
+use App\Models\UserService;
 use Filament\Actions;
 use Filament\Forms\Components\Actions\Action;
 use Filament\Forms\Components\FileUpload;
@@ -55,8 +59,6 @@ class EditTransaction extends EditRecord
         $clientServices = [];
         $totalPriceService = 0;
         $totalPriceAdditionalService = 0;
-
-        // dd($this->record, $this->record->discount);
 
         foreach ($items as $key => $item) {
             if ($item->is_additional == 0) {
@@ -413,7 +415,7 @@ class EditTransaction extends EditRecord
                             ->action(function ($livewire, $record, Get $get) {
                                 $livewire->save();
 
-                                DB::transaction(function () use ($get, $record) {
+                                $transaction = DB::transaction(function () use ($get, $record) {
                                     if ($get('status') == TransactionStatus::PAID) {
                                         ClientVisit::where('id', $record->clientVisit->id)->update(['status' => VisitStatus::DONE]);
                                     }
@@ -430,7 +432,49 @@ class EditTransaction extends EditRecord
 
                                         Transaction::where('id', $record->id)->update(['amount' => $record->amount - $discount->discount]);
                                     }
+
+                                    return Transaction::where('id', $record->id)->first();
                                 });
+
+                                if ($transaction->status == TransactionStatus::PAID) {
+                                    $clientVisit = ClientVisit::where('id', $transaction->client_visit_id)->first();
+                                    $emailPayload = [
+                                        'client_reg_id' => $clientVisit->client->reg_id,
+                                        'client_name' => $clientVisit->client->name,
+                                        'client_service' => $clientVisit->clientVisitCupping->service->name,
+                                        'client_service_price' => $clientVisit->clientVisitCupping->service->price,
+                                        'client_service_commision' => $clientVisit->clientVisitCupping->service->commision,
+                                        'client_service_is_cupping' => $clientVisit->clientVisitCupping->service->is_cupping,
+                                        'client_service_started_at' => $clientVisit->started_at,
+                                        'client_service_finished_at' => now(),
+                                        'client_service_status' => VisitStatus::WAITING_FOR_PAYMENT,
+                                        'client_transaction_created_by' => $transaction->createdBy->name,
+                                        'client_transaction_invoice' => $transaction->invoice_id,
+                                        'client_transaction_additional' => $get('total_additional'),
+                                        'client_transaction_name' => "",
+                                        'client_transaction_discount' => 0,
+                                        'client_transaction_amount' => $transaction->amount,
+                                        'client_transaction_payment_method' => $transaction->payment_method,
+                                        'client_transaction_status' => $transaction->status,
+                                        'client_therapist' => $clientVisit->therapy->name,
+                                        'client_created_at' => $clientVisit->created_at,
+                                    ];
+
+                                    if ($transaction->discount != null) {
+                                        $emailPayload['client_transaction_name'] = $transaction->discount->name;
+                                        $emailPayload['$transaction->discount->discount'] = $transaction->discount->discount;
+                                    }
+
+                                    $idSuperAdmin = DB::table('roles')->where('name', Role::SUPER_ADMIN)->first()->id;
+                                    $users = User::join('model_has_roles', 'model_has_roles.model_id', '=', 'users.id')
+                                        ->where('model_has_roles.role_id', $idSuperAdmin)
+                                        ->where('users.is_active', 1)
+                                        ->get();
+
+                                    foreach ($users as $key => $admin) {
+                                        dispatch(new EmailNewTransactionJob($emailPayload, $admin->email));
+                                    }
+                                }
 
                                 $this->record->refresh();
                             })
