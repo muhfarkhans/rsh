@@ -28,8 +28,8 @@ class ListUsers extends ListRecords
         $idCashier = DB::table('roles')->where('name', Role::CASHIER)->first()->id;
         $dataStatus = [
             $idSuperAdmin => 'Super Admin',
-            $idTherapist => 'Cashier',
-            $idCashier => 'Therapist',
+            $idCashier => 'Cashier',
+            $idTherapist => 'Therapist',
         ];
 
         $tabs = [
