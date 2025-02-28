@@ -3,16 +3,17 @@ name: DEPLOY TO SERVER
 on: [push, pull_request]
 
 jobs:
-  Deploy-Laravel:
+  web-deploy:
+    name: 🎉 Deploy website
     runs-on: ubuntu-latest
     steps:
-    - name: Deploy Using ssh
-      uses: appleboy/ssh-action@master
+    # Checkout the repository
+    - name: 🚚 Get latest code
+      uses: actions/checkout@v4
+    # sync files via FTP
+    - name: 📂 Sync files via FTP
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.4
       with:
-        host: ${{ secrets.DOMAIN_HOSTING }}
-        username: ${{ secrets.USER_HOSTING }}
-        password:  ${{ secrets.PW_HOSTING }}
-        port: ${{ secrets.PORT_HOSTING }}
-        script: |
-          cd admin.rshincaresurabaya.com
-          git pull
+        server: ${{ secrets.FTP_SERVER }}
+        username: ${{ secrets.FTP_USER }}
+        password: ${{ secrets.FTP_PASSWORD }}

@@ -2,18 +2,21 @@ name: DEPLOY TO SERVER
 
 on: [push, pull_request]
 
-
 jobs:
-  Deploy-Laravel:
+  deploy:
     runs-on: ubuntu-latest
+
     steps:
-    - name: Deploy Using SSH
-      uses: appleboy/ssh-action@master
-      with:
-        host: ${{ secrets.DOMAIN_HOSTING }}
-        username: ${{ secrets.USER_HOSTING }}
-        password: ${{ secrets.PW_HOSTING }}
-        port: 64000
-        script: |
-          cd admin.rshincaresurabaya.com
-          git pull 
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.DOMAIN_HOSTING }}
+          username: ${{ secrets.USER_HOSTING }}
+          password: ${{ secrets.PW_HOSTING }}
+          port: ${{ secrets.PORT_HOSTING }}
+          script: |
+            cd /home/rshincar/admin.rshincaresurabaya.com
+            git pull https://github.com/muhfarkhans/rsh.git
