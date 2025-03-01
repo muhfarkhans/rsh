@@ -23,7 +23,13 @@
 
                 this.map = L.map('map', {
                     crs: L.CRS.Simple,
+                    zoomControl: false,
                 });
+
+                this.map.dragging.disable();
+                this.map.touchZoom.disable();
+                this.map.scrollWheelZoom.disable();
+                this.map.doubleClickZoom.disable();
 
                 const bounds = [[0, 0], [600, 424]];
                 const imageurl = '{{ url('') }}' + this.imgurl;
