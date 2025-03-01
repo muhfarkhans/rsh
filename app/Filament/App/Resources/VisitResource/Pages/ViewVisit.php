@@ -57,6 +57,13 @@ class ViewVisit extends ViewRecord
                                     ->url(function (ClientVisit $record) {
                                         return VisitResource::getUrl('edit', ['record' => $record]);
                                     })
+                                    ->hidden(function () {
+                                        if (in_array(ConstRole::THERAPIST, Auth::user()->getRoleNames()->toArray())) {
+                                            return true;
+                                        }
+
+                                        return false;
+                                    })
                             ])
                             ->schema([
                                 TextEntry::make('client.name')
@@ -289,17 +296,29 @@ class ViewVisit extends ViewRecord
                                     \Filament\Infolists\Components\Actions::make([
                                         Action::make('info_invoice')
                                             ->url(function (ClientVisit $record) {
-                                                return TransactionResource::getUrl('view', ['record' => $record->transactions->last()]);
+                                                if ($record->transactions->last() != null) {
+                                                    return TransactionResource::getUrl('view', ['record' => $record->transactions->last()]);
+                                                }
+
+                                                return url('');
                                             })
                                             ->label(function (ClientVisit $record) {
-                                                return "Invoice " . $record->transactions->last()->invoice_id;
+                                                $invoiceId = "";
+                                                if ($record->transactions->last() != null) {
+                                                    $invoiceId = $record->transactions->last()->invoice_id;
+                                                }
+                                                return "Invoice " . $invoiceId;
                                             })
                                             ->color('info')
                                     ])->fullWidth(),
                                 ])
                                 ->hidden(function (ClientVisit $record) {
                                     if (in_array(ConstRole::THERAPIST, Auth::user()->getRoleNames()->toArray())) {
-                                        return false;
+                                        return true;
+                                    }
+
+                                    if ($record->transactions->last() == null) {
+                                        return true;
                                     }
 
                                     if ($record->transaction == null) {
@@ -310,74 +329,116 @@ class ViewVisit extends ViewRecord
                                 })
                                 ->columnSpan(1),
                         ])->columnSpan(1),
+                        Section::make('Layanan')
+                            ->schema([
+                                TextEntry::make('therapy.name')
+                                    ->label('Terapis')
+                                    ->extraAttributes(FilamentHelper::textEntryExtraAttributes())
+                                    ->default("-")
+                                    ->columnSpan([
+                                        'default' => 4,
+                                        'md' => 2,
+                                        'lg' => 2
+                                    ]),
+                                TextEntry::make('clientVisitCupping.service.name')
+                                    ->label('Layanan')
+                                    ->extraAttributes(FilamentHelper::textEntryExtraAttributes())
+                                    ->default("-")
+                                    ->columnSpan([
+                                        'default' => 4,
+                                        'md' => 2,
+                                        'lg' => 2
+                                    ]),
+                            ])
+                            ->columns([
+                                'default' => 1,
+                                'md' => 4,
+                                'lg' => 4,
+                            ])
+                            ->columnSpan(2),
                         Section::make('Riwayat Penyakit')
                             ->schema([
                                 TextEntry::make('complaint')
                                     ->label('Keluhan yang dirasakan')
                                     ->weight(FontWeight::Bold)
+                                    ->default("-")
                                     ->columnSpanFull(),
                                 TextEntry::make('medical_history')
                                     ->label('Riwayat medis')
                                     ->listWithLineBreaks()
+                                    ->default("-")
                                     ->bulleted(),
                                 TextEntry::make('family_medical_history')
                                     ->label('Riwayat penyakit keluarga')
                                     ->extraAttributes(FilamentHelper::textEntryExtraAttributes())
+                                    ->default("-")
                                     ->columnSpanFull(),
                                 TextEntry::make('medication_history')
                                     ->label('Riwayat pengobatan')
                                     ->extraAttributes(FilamentHelper::textEntryExtraAttributes())
+                                    ->default("-")
                                     ->columnSpanFull(),
                                 Grid::make()->columns(2)->schema([
                                     TextEntry::make('sleep_habits_start')
                                         ->label('Waktu tidur')
                                         ->extraAttributes(FilamentHelper::textEntryExtraAttributes())
+                                        ->default("-")
                                         ->getStateUsing(fn($record) => $record->sleep_habits['start']),
                                     TextEntry::make('sleep_habits_end')
                                         ->label('Waktu bangun')
                                         ->extraAttributes(FilamentHelper::textEntryExtraAttributes())
+                                        ->default("-")
                                         ->getStateUsing(fn($record) => $record->sleep_habits['end']),
                                 ])->columnSpanFull(),
                                 Grid::make()->columns(3)->schema([
                                     TextEntry::make('exercise_name')
                                         ->label('Jenis olahraga')
                                         ->extraAttributes(FilamentHelper::textEntryExtraAttributes())
+                                        ->default("-")
                                         ->getStateUsing(fn($record) => $record->exercise['name']),
                                     TextEntry::make('exercise_intensity')
                                         ->label('Intensitas olahraga')
                                         ->extraAttributes(FilamentHelper::textEntryExtraAttributes())
+                                        ->default("-")
                                         ->getStateUsing(fn($record) => $record->exercise['intensity']),
                                     TextEntry::make('exercise_time')
                                         ->label('Waktu olahraga')
                                         ->extraAttributes(FilamentHelper::textEntryExtraAttributes())
+                                        ->default("-")
                                         ->getStateUsing(fn($record) => $record->exercise['time']),
                                 ])->columnSpanFull(),
                                 Grid::make()->columns(2)->schema([
                                     TextEntry::make('nutrition_name')
                                         ->label('Jenis makanan')
                                         ->extraAttributes(FilamentHelper::textEntryExtraAttributes())
+                                        ->default("-")
                                         ->getStateUsing(fn($record) => $record->nutrition['name']),
                                     TextEntry::make('nutrition_portion')
                                         ->label('Porsi makanan')
                                         ->extraAttributes(FilamentHelper::textEntryExtraAttributes())
+                                        ->default("-")
                                         ->getStateUsing(fn($record) => $record->nutrition['portion']),
                                     TextEntry::make('exercise_time')
                                         ->label('Waktu makan')
                                         ->extraAttributes(FilamentHelper::textEntryExtraAttributes())
+                                        ->default("-")
                                         ->getStateUsing(fn($record) => $record->nutrition['time']),
                                     TextEntry::make('nutrition_type')
                                         ->label('Golongan makanan')
                                         ->extraAttributes(FilamentHelper::textEntryExtraAttributes())
+                                        ->default("-")
                                         ->getStateUsing(fn($record) => $record->nutrition['type']),
                                 ])->columnSpanFull(),
                                 Grid::make()->columns(2)->schema([
                                     TextEntry::make('spiritual_name')
                                         ->label('Ibadah wajib')
                                         ->extraAttributes(FilamentHelper::textEntryExtraAttributes())
+                                        ->default("-")
                                         ->getStateUsing(fn($record) => $record->spiritual['name']),
                                     TextEntry::make('spiritual_type')
                                         ->label('Jenis ibadah')
                                         ->extraAttributes(FilamentHelper::textEntryExtraAttributes())
+                                        ->default("-")
                                         ->getStateUsing(fn($record) => $record->spiritual['type']),
                                 ])->columnSpanFull(),
                             ])
@@ -389,48 +450,88 @@ class ViewVisit extends ViewRecord
                                     ->label('Suhu')
                                     ->getStateUsing(fn($record) => ($record->clientVisitCheck ? $record->clientVisitCheck->check_other : 0))
                                     ->extraAttributes(FilamentHelper::textEntryExtraAttributes())
-                                    ->columnSpanFull(),
+                                    ->default("-")
+                                    ->columnSpan([
+                                        'default' => 4,
+                                        'md' => 1,
+                                        'lg' => 1
+                                    ]),
                                 TextEntry::make('blood_pressure')
                                     ->label('Tekanan darah')
                                     ->suffix('mm/Hg')
                                     ->getStateUsing(fn($record) => ($record->clientVisitCheck ? $record->clientVisitCheck->blood_pressure : 0))
                                     ->extraAttributes(FilamentHelper::textEntryExtraAttributes())
-                                    ->columnSpanFull(),
+                                    ->default("-")
+                                    ->columnSpan([
+                                        'default' => 4,
+                                        'md' => 1,
+                                        'lg' => 1
+                                    ]),
                                 TextEntry::make('pulse')
                                     ->label('Nadi')
                                     ->getStateUsing(fn($record) => ($record->clientVisitCheck ? $record->clientVisitCheck->pulse : 0))
                                     ->extraAttributes(FilamentHelper::textEntryExtraAttributes())
-                                    ->columnSpanFull(),
+                                    ->default("-")
+                                    ->columnSpan([
+                                        'default' => 4,
+                                        'md' => 1,
+                                        'lg' => 1
+                                    ]),
                                 TextEntry::make('respiratory')
                                     ->label('Frekuensi nafas')
                                     ->getStateUsing(fn($record) => ($record->clientVisitCheck ? $record->clientVisitCheck->respiratory : 0))
                                     ->extraAttributes(FilamentHelper::textEntryExtraAttributes())
-                                    ->columnSpanFull(),
+                                    ->default("-")
+                                    ->columnSpan([
+                                        'default' => 4,
+                                        'md' => 1,
+                                        'lg' => 1
+                                    ]),
                                 TextEntry::make('weight')
                                     ->label('Berat Badan')
                                     ->suffix('kg')
                                     ->getStateUsing(fn($record) => ($record->clientVisitCheck ? $record->clientVisitCheck->weight : 0))
                                     ->extraAttributes(FilamentHelper::textEntryExtraAttributes())
-                                    ->columnSpanFull(),
+                                    ->default("-")
+                                    ->columnSpan([
+                                        'default' => 4,
+                                        'md' => 1,
+                                        'lg' => 1
+                                    ]),
                                 TextEntry::make('height')
                                     ->label('Tinggi badan')
                                     ->suffix('cm')
                                     ->getStateUsing(fn($record) => ($record->clientVisitCheck ? $record->clientVisitCheck->height : 0))
                                     ->extraAttributes(FilamentHelper::textEntryExtraAttributes())
-                                    ->columnSpanFull(),
+                                    ->default("-")
+                                    ->columnSpan([
+                                        'default' => 4,
+                                        'md' => 1,
+                                        'lg' => 1
+                                    ]),
                                 TextEntry::make('check_other')
                                     ->label('Pemeriksaan lainnya')
                                     ->getStateUsing(fn($record) => ($record->clientVisitCheck ? $record->clientVisitCheck->check_other : "-"))
                                     ->extraAttributes(FilamentHelper::textEntryExtraAttributes())
-                                    ->columnSpanFull(),
+                                    ->default("-")
+                                    ->columnSpan([
+                                        'default' => 4,
+                                        'md' => 2,
+                                        'lg' => 2
+                                    ]),
                             ])
-                            ->columns(2)
+                            ->columns([
+                                'default' => 1,
+                                'md' => 4,
+                                'lg' => 4,
+                            ])
                             ->columnSpan(2),
                         Section::make('Diagnosa')
                             ->schema([
                                 TextEntry::make('diagnose')
                                     ->label('')
                                     ->weight(FontWeight::Bold)
+                                    ->default("-")
                                     ->columnSpanFull(),
                             ])
                             ->columns(2)

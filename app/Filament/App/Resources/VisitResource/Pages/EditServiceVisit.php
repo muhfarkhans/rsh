@@ -142,10 +142,10 @@ class EditServiceVisit extends EditRecord
         return DB::transaction(function () use ($data, $record, $signatureTherapistFilename, $signatureClientFilename) {
             $dataCupping = [
                 'client_visit_id' => $record->id,
-                'therapy_id' => $data['therapy_id'],
+                'therapy_id' => $record->therapy_id,
                 'service_id' => $data['service_id'],
                 'temperature' => $data['temperature'],
-                'blood_pressure' => $data['blood_pressure'],
+                'blood_pressure' => $data['sistolik'] / $data['diastolik'],
                 'pulse' => $data['pulse'],
                 'respiratory' => $data['respiratory'],
                 'side_effect' => $data['side_effect'],
@@ -157,6 +157,10 @@ class EditServiceVisit extends EditRecord
                 'planning' => $data['planning'],
                 'points' => $data['points'] ?? null,
             ];
+
+            if (isset($data['therapy_id'])) {
+                $dataCupping['therapy_id'] = $data['therapy_id'];
+            }
 
             if (in_array(Role::SUPER_ADMIN, Auth::user()->getRoleNames()->toArray())) {
                 $dataCupping['therapy_id'] = $data['therapy_id'];
@@ -172,7 +176,7 @@ class EditServiceVisit extends EditRecord
             $dataClientCheck = [
                 'client_visit_id' => $record->id,
                 'temperature' => $data['temperature'],
-                'blood_pressure' => $data['blood_pressure'],
+                'blood_pressure' => $data['sistolik'] / $data['diastolik'],
                 'pulse' => $data['pulse'],
                 'respiratory' => $data['respiratory'],
                 'weight' => $data['weight'],
@@ -301,89 +305,145 @@ class EditServiceVisit extends EditRecord
                         ])
                     ])->columnSpanFull(),
                     Section::make()->schema([
-                        Grid::make()->columns(2)->schema([
-                            Select::make('service_id')
-                                ->label('Nama Layanan')
-                                ->options(function (): array {
-                                    return Service::get()
-                                        ->mapWithKeys(function ($service) {
-                                            $text = $service->name . ' - ' . $service->price . ' - ' . ($service->is_cupping ? 'Bekam' : 'Non-Bekam');
-                                            return [$service->id => $text];
-                                        })
-                                        ->toArray();
-                                })
-                                ->live()
-                                ->afterStateUpdated(function (?string $state) {
-                                    if ($state == "1") {
-                                        $this->hidePointSkeleton = true;
-                                    } else {
-                                        $this->hidePointSkeleton = false;
-                                    }
-                                })
-                                ->required()
-                                ->searchable()
-                                ->preload()
-                                ->columnSpanFull(),
-                            Select::make('therapy_id')
-                                ->label('Nama Terapis')
-                                ->options(function () {
-                                    return User::with(['roles'])->whereHas('roles', function ($query) {
-                                        return $query->where('name', Role::THERAPIST);
-                                    })->get()->pluck('name', 'id');
-                                })
-                                ->default(fn() => $this->record ? $this->record->therapy_id : 0)
-                                ->live()
-                                ->required()
-                                ->searchable()
-                                ->preload()
-                                ->disabled(function () {
-                                    if (in_array(Role::SUPER_ADMIN, Auth::user()->getRoleNames()->toArray())) {
-                                        return false;
-                                    } else {
-                                        return true;
-                                    }
-                                })
-                                ->columnSpanFull(),
-                            TextInput::make('temperature')
-                                ->label('Suhu')
-                                ->default(fn() => $this->record->clientVisitCheck ? $this->record->clientVisitCheck->temperature : 0)
-                                ->required()
-                                ->numeric(),
-                            TextInput::make('blood_pressure')
-                                ->label('Tekanan darah')
-                                ->default(fn() => $this->record->clientVisitCheck ? $this->record->clientVisitCheck->blood_pressure : 0)
-                                ->required()
-                                ->numeric()
-                                ->suffix('mm/Hg'),
-                            TextInput::make('pulse')
-                                ->label('Nadi')
-                                ->default(fn() => $this->record->clientVisitCheck ? $this->record->clientVisitCheck->pulse : 0)
-                                ->required()
-                                ->numeric(),
-                            TextInput::make('respiratory')
-                                ->label('Frekuensi nafas')
-                                ->default(fn() => $this->record->clientVisitCheck ? $this->record->clientVisitCheck->respiratory : 0)
-                                ->required()
-                                ->numeric(),
-                            TextInput::make('weight')
-                                ->label('Berat Badan')
-                                ->default(fn() => $this->record->clientVisitCheck ? $this->record->clientVisitCheck->weight : 0)
-                                ->required()
-                                ->numeric()
-                                ->suffix('Kg'),
-                            TextInput::make('height')
-                                ->label('Tinggi badan')
-                                ->default(fn() => $this->record->clientVisitCheck ? $this->record->clientVisitCheck->height : 0)
-                                ->required()
-                                ->numeric()
-                                ->suffix('cm'),
-                            MarkdownEditor::make('checks_other')
-                                ->label('Pemeriksaan lainnya')
-                                ->default(fn() => $this->record->clientVisitCheck ? $this->record->clientVisitCheck->check_other : 0)
-                                ->columnSpan(2),
-                        ])
+                        Select::make('service_id')
+                            ->label('Nama Layanan')
+                            ->options(function (): array {
+                                return Service::get()
+                                    ->mapWithKeys(function ($service) {
+                                        $text = $service->name . ' - ' . $service->price . ' - ' . ($service->is_cupping ? 'Bekam' : 'Non-Bekam');
+                                        return [$service->id => $text];
+                                    })
+                                    ->toArray();
+                            })
+                            ->live()
+                            ->afterStateUpdated(function (?string $state) {
+                                if ($state == "1") {
+                                    $this->hidePointSkeleton = true;
+                                } else {
+                                    $this->hidePointSkeleton = false;
+                                }
+                            })
+                            ->required()
+                            ->searchable()
+                            ->preload()
+                            ->columnSpan([
+                                'default' => 4,
+                                'md' => 2,
+                                'lg' => 2
+                            ]),
+                        Select::make('therapy_id')
+                            ->label('Nama Terapis')
+                            ->options(function () {
+                                return User::with(['roles'])->whereHas('roles', function ($query) {
+                                    return $query->where('name', Role::THERAPIST);
+                                })->get()->pluck('name', 'id');
+                            })
+                            ->default(fn() => $this->record ? $this->record->therapy_id : 0)
+                            ->live()
+                            ->required()
+                            ->searchable()
+                            ->preload()
+                            ->disabled(function () {
+                                if (in_array(Role::SUPER_ADMIN, Auth::user()->getRoleNames()->toArray())) {
+                                    return false;
+                                } else {
+                                    return true;
+                                }
+                            })
+                            ->columnSpan([
+                                'default' => 4,
+                                'md' => 2,
+                                'lg' => 2
+                            ]),
+                        TextInput::make('temperature')
+                            ->label('Suhu')
+                            ->default(fn() => $this->record->clientVisitCheck ? $this->record->clientVisitCheck->temperature : 0)
+                            ->required()
+                            ->numeric()
+                            ->columnSpan([
+                                'default' => 4,
+                                'md' => 2,
+                                'lg' => 2
+                            ]),
+                        TextInput::make('pulse')
+                            ->label('Nadi')
+                            ->default(fn() => $this->record->clientVisitCheck ? $this->record->clientVisitCheck->pulse : 0)
+                            ->required()
+                            ->numeric()
+                            ->columnSpan([
+                                'default' => 4,
+                                'md' => 2,
+                                'lg' => 2
+                            ]),
+                        TextInput::make('sistolik')
+                            ->label('Sistolik')
+                            ->default(fn() => $this->record->clientVisitCheck ? $this->record->clientVisitCheck->blood_pressure : 0)
+                            ->required()
+                            ->numeric()
+                            ->suffix('mm/Hg')
+                            ->columnSpan([
+                                'default' => 4,
+                                'md' => 2,
+                                'lg' => 2
+                            ]),
+                        TextInput::make('diastolik')
+                            ->label('Diastolik')
+                            ->default(fn() => $this->record->clientVisitCheck ? $this->record->clientVisitCheck->blood_pressure : 0)
+                            ->required()
+                            ->numeric()
+                            ->suffix('mm/Hg')
+                            ->columnSpan([
+                                'default' => 4,
+                                'md' => 2,
+                                'lg' => 2
+                            ]),
+                        TextInput::make('respiratory')
+                            ->label('Frekuensi nafas')
+                            ->default(fn() => $this->record->clientVisitCheck ? $this->record->clientVisitCheck->respiratory : 0)
+                            ->required()
+                            ->numeric()
+                            ->columnSpan([
+                                'default' => 4,
+                                'md' => 4,
+                                'lg' => 4
+                            ]),
+                        TextInput::make('weight')
+                            ->label('Berat Badan')
+                            ->default(fn() => $this->record->clientVisitCheck ? $this->record->clientVisitCheck->weight : 0)
+                            ->required()
+                            ->numeric()
+                            ->suffix('Kg')
+                            ->columnSpan([
+                                'default' => 4,
+                                'md' => 2,
+                                'lg' => 2
+                            ]),
+                        TextInput::make('height')
+                            ->label('Tinggi badan')
+                            ->default(fn() => $this->record->clientVisitCheck ? $this->record->clientVisitCheck->height : 0)
+                            ->required()
+                            ->numeric()
+                            ->suffix('cm')
+                            ->columnSpan([
+                                'default' => 4,
+                                'md' => 2,
+                                'lg' => 2
+                            ]),
+                        Textarea::make('checks_other')
+                            ->label('Pemeriksaan lainnya')
+                            ->default(fn() => $this->record->clientVisitCheck ? $this->record->clientVisitCheck->check_other : 0)
+                            ->columnSpan([
+                                'default' => 4,
+                                'md' => 4,
+                                'lg' => 4
+                            ]),
                     ])->columnSpanFull(),
-                ])->columnSpan(1),
+                ])
+                    ->columns([
+                        'default' => 1,
+                        'md' => 4,
+                        'lg' => 4,
+                    ])->columnSpan(1),
                 Grid::make()->columns(1)->schema([
                     Section::make()->schema([
                         PointSkeleton::make('points')
@@ -453,6 +513,11 @@ class EditServiceVisit extends EditRecord
                                     $id = $get('service_id');
 
                                     if ($id == null) {
+                                        return true;
+                                    }
+
+                                    $service = Service::where('id', $id)->first();
+                                    if ($service->is_cupping == 0) {
                                         return true;
                                     }
 
@@ -533,36 +598,68 @@ class EditServiceVisit extends EditRecord
                             return false;
                         })
                     ])->columnSpan(1)
-                ])
-                    ->columnSpan(1),
+                ])->columnSpan(1),
                 Section::make()->schema([
                     Grid::make()->columns(1)->schema([
-                        MarkdownEditor::make('side_effect')
+                        Textarea::make('side_effect')
                             ->label('Efek samping')
                             ->required()
-                            ->columnSpanFull(),
-                        MarkdownEditor::make('first_action')
+                            ->columnSpan([
+                                'default' => 4,
+                                'md' => 2,
+                                'lg' => 2
+                            ]),
+                        Textarea::make('first_action')
                             ->label('Aksi pertama')
                             ->required()
-                            ->columnSpanFull(),
-                        MarkdownEditor::make('education_after')
+                            ->columnSpan([
+                                'default' => 4,
+                                'md' => 2,
+                                'lg' => 2
+                            ]),
+                        Textarea::make('education_after')
                             ->label('Edukasi setelah tindakan')
                             ->required()
-                            ->columnSpanFull(),
+                            ->columnSpan([
+                                'default' => 4,
+                                'md' => 2,
+                                'lg' => 2
+                            ]),
                         TextInput::make('subjective')
                             ->required()
-                            ->columnSpanFull(),
+                            ->columnSpan([
+                                'default' => 4,
+                                'md' => 2,
+                                'lg' => 2
+                            ]),
                         TextInput::make('objective')
                             ->required()
-                            ->columnSpanFull(),
+                            ->columnSpan([
+                                'default' => 4,
+                                'md' => 2,
+                                'lg' => 2
+                            ]),
                         TextInput::make('analysis')
                             ->required()
-                            ->columnSpanFull(),
+                            ->columnSpan([
+                                'default' => 4,
+                                'md' => 2,
+                                'lg' => 2
+                            ]),
                         TextInput::make('planning')
                             ->required()
-                            ->columnSpanFull(),
+                            ->columnSpan([
+                                'default' => 4,
+                                'md' => 2,
+                                'lg' => 2
+                            ]),
                     ])
-                ])->columnSpanFull(),
+                ])
+                    ->columns([
+                        'default' => 1,
+                        'md' => 4,
+                        'lg' => 4,
+                    ]),
                 Section::make()->schema([
                     Grid::make()->columns(1)->schema([
                         TextInput::make('client_relation_as')

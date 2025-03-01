@@ -66,7 +66,9 @@ class AppPanelProvider extends PanelProvider
                 FilamentEditProfilePlugin::make()
                     ->setIcon('heroicon-o-user')
                     ->slug('my-profile')
-                    ->setTitle('My Profile')
+                    ->setTitle(function () {
+                        return Auth::user()->name;
+                    })
                     ->setNavigationGroup('Users')
                     ->shouldShowBrowserSessionsForm()
                     ->shouldRegisterNavigation(false)
@@ -74,7 +76,9 @@ class AppPanelProvider extends PanelProvider
             ])
             ->userMenuItems([
                 'profile' => MenuItem::make()
-                    ->label('My Profile')
+                    ->label(function () {
+                        return Auth::user()->name;
+                    })
                     ->url(fn(): string => EditProfilePage::getUrl())
                     ->icon('heroicon-m-user-circle'),
             ])
