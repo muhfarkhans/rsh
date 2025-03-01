@@ -44,7 +44,13 @@
 
             loadExistingMarkers() {
                 (this.state || []).forEach((coord) => {
-                    const marker = L.marker(coord)
+                    const closeIcon = L.icon({
+                        iconUrl: '/assets/images/close.png',
+                        iconSize: [15, 15],
+                        popupAnchor: [-3, -76],
+                    });
+
+                    const marker = L.marker(coord, { icon: closeIcon })
                         .addTo(this.map)
                         .on('click', () => this.removeMarker(marker));
 
@@ -58,7 +64,13 @@
                     // return
                 }
 
-                const marker = L.marker(latlng)
+                const closeIcon = L.icon({
+                    iconUrl: '/assets/images/close.png',
+                    iconSize: [15, 15],
+                    popupAnchor: [-3, -76],
+                });
+
+                const marker = L.marker(latlng, { icon: closeIcon })
                     .addTo(this.map)
                     .on('click', () => this.removeMarker(marker));
 
