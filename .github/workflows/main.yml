@@ -2,21 +2,4 @@ name: DEPLOY TO SERVER
 
 on: [push, pull_request]
 
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v3
-
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v0.1.10
-        with:
-          host: ${{ secrets.DOMAIN_HOSTING }}
-          username: ${{ secrets.USER_HOSTING }}
-          password: ${{ secrets.PW_HOSTING }}
-          port: ${{ secrets.PORT_HOSTING }}
-          script: |
-            cd /home/rshincar/admin.rshincaresurabaya.com
-            git pull https://github.com/muhfarkhans/rsh.git
