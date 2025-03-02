@@ -14,6 +14,7 @@ use App\Models\Discount;
 use App\Models\Transaction;
 use App\Models\TransactionDiscount;
 use App\Models\UserService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Filament\Actions;
 use Filament\Forms\Components\Actions\Action;
@@ -446,82 +447,108 @@ class EditTransaction extends EditRecord
                         Action::make('Save')
                             ->label(function () {
                                 if ($this->record->status == TransactionStatus::PAID) {
-                                    return "Sudah dibayarkan";
+                                    return "Download Struk";
                                 } else {
                                     return "Bayar";
                                 }
                             })
                             ->action(function ($livewire, $record, Get $get) {
-                                $livewire->save();
+                                if ($this->record->status != TransactionStatus::PAID) {
+                                    $livewire->save();
 
-                                $transaction = DB::transaction(function () use ($get, $record) {
-                                    if ($get('status') == TransactionStatus::PAID) {
-                                        ClientVisit::where('id', $record->clientVisit->id)->update(['status' => VisitStatus::DONE]);
+                                    $transaction = DB::transaction(function () use ($get, $record) {
+                                        if ($get('status') == TransactionStatus::PAID) {
+                                            ClientVisit::where('id', $record->clientVisit->id)->update(['status' => VisitStatus::DONE]);
+                                        }
+
+                                        if ($get('discount') != null) {
+                                            $discount = Discount::where('code', $get('discount_code_used'))->first();
+                                            TransactionDiscount::create([
+                                                'transaction_id' => $record->id,
+                                                'discount_id' => $discount->id,
+                                                'name' => $discount->name,
+                                                'discount' => $discount->discount,
+                                                'code' => $discount->code,
+                                            ]);
+
+                                            Transaction::where('id', $record->id)->update(['amount' => $record->amount - $discount->discount]);
+                                        }
+
+                                        return Transaction::where('id', $record->id)->first();
+                                    });
+
+                                    if ($transaction->status == TransactionStatus::PAID) {
+                                        $clientVisit = ClientVisit::where('id', $transaction->client_visit_id)->first();
+                                        $emailPayload = [
+                                            'client_reg_id' => $clientVisit->client->reg_id,
+                                            'client_name' => $clientVisit->client->name,
+                                            'client_service' => $clientVisit->clientVisitCupping->service->name,
+                                            'client_service_price' => $clientVisit->clientVisitCupping->service->price,
+                                            'client_service_commision' => $clientVisit->clientVisitCupping->service->commision,
+                                            'client_service_is_cupping' => $clientVisit->clientVisitCupping->service->is_cupping,
+                                            'client_service_started_at' => $clientVisit->started_at,
+                                            'client_service_finished_at' => now(),
+                                            'client_service_status' => VisitStatus::WAITING_FOR_PAYMENT,
+                                            'client_transaction_created_by' => $transaction->createdBy->name,
+                                            'client_transaction_invoice' => $transaction->invoice_id,
+                                            'client_transaction_additional' => $get('total_additional'),
+                                            'client_transaction_name' => "",
+                                            'client_transaction_discount' => 0,
+                                            'client_transaction_amount' => $transaction->amount,
+                                            'client_transaction_payment_method' => $transaction->payment_method,
+                                            'client_transaction_status' => $transaction->status,
+                                            'client_therapist' => $clientVisit->therapy->name,
+                                            'client_created_at' => $clientVisit->created_at,
+                                        ];
+
+                                        if ($transaction->discount != null) {
+                                            $emailPayload['client_transaction_name'] = $transaction->discount->name;
+                                            $emailPayload['$transaction->discount->discount'] = $transaction->discount->discount;
+                                        }
+
+                                        $idSuperAdmin = DB::table('roles')->where('name', Role::SUPER_ADMIN)->first()->id;
+                                        $users = User::join('model_has_roles', 'model_has_roles.model_id', '=', 'users.id')
+                                            ->where('model_has_roles.role_id', $idSuperAdmin)
+                                            ->where('users.is_active', 1)
+                                            ->get();
+
+                                        foreach ($users as $key => $admin) {
+                                            dispatch(new EmailNewTransactionJob($emailPayload, $admin->email));
+                                        }
                                     }
-
-                                    if ($get('discount') != null) {
-                                        $discount = Discount::where('code', $get('discount_code_used'))->first();
-                                        TransactionDiscount::create([
-                                            'transaction_id' => $record->id,
-                                            'discount_id' => $discount->id,
-                                            'name' => $discount->name,
-                                            'discount' => $discount->discount,
-                                            'code' => $discount->code,
-                                        ]);
-
-                                        Transaction::where('id', $record->id)->update(['amount' => $record->amount - $discount->discount]);
-                                    }
-
-                                    return Transaction::where('id', $record->id)->first();
-                                });
-
-                                if ($transaction->status == TransactionStatus::PAID) {
-                                    $clientVisit = ClientVisit::where('id', $transaction->client_visit_id)->first();
-                                    $emailPayload = [
-                                        'client_reg_id' => $clientVisit->client->reg_id,
-                                        'client_name' => $clientVisit->client->name,
-                                        'client_service' => $clientVisit->clientVisitCupping->service->name,
-                                        'client_service_price' => $clientVisit->clientVisitCupping->service->price,
-                                        'client_service_commision' => $clientVisit->clientVisitCupping->service->commision,
-                                        'client_service_is_cupping' => $clientVisit->clientVisitCupping->service->is_cupping,
-                                        'client_service_started_at' => $clientVisit->started_at,
-                                        'client_service_finished_at' => now(),
-                                        'client_service_status' => VisitStatus::WAITING_FOR_PAYMENT,
-                                        'client_transaction_created_by' => $transaction->createdBy->name,
-                                        'client_transaction_invoice' => $transaction->invoice_id,
-                                        'client_transaction_additional' => $get('total_additional'),
-                                        'client_transaction_name' => "",
-                                        'client_transaction_discount' => 0,
-                                        'client_transaction_amount' => $transaction->amount,
-                                        'client_transaction_payment_method' => $transaction->payment_method,
-                                        'client_transaction_status' => $transaction->status,
-                                        'client_therapist' => $clientVisit->therapy->name,
-                                        'client_created_at' => $clientVisit->created_at,
-                                    ];
-
-                                    if ($transaction->discount != null) {
-                                        $emailPayload['client_transaction_name'] = $transaction->discount->name;
-                                        $emailPayload['$transaction->discount->discount'] = $transaction->discount->discount;
-                                    }
-
-                                    $idSuperAdmin = DB::table('roles')->where('name', Role::SUPER_ADMIN)->first()->id;
-                                    $users = User::join('model_has_roles', 'model_has_roles.model_id', '=', 'users.id')
-                                        ->where('model_has_roles.role_id', $idSuperAdmin)
-                                        ->where('users.is_active', 1)
-                                        ->get();
-
-                                    foreach ($users as $key => $admin) {
-                                        dispatch(new EmailNewTransactionJob($emailPayload, $admin->email));
-                                    }
-                                }
-
-                                $this->record->refresh();
-                            })
-                            ->disabled(function () {
-                                if ($this->record->status == TransactionStatus::PAID) {
-                                    return true;
+                                    $this->record->refresh();
                                 } else {
-                                    return false;
+                                    $nameAdditionalService = "-";
+                                    $totalPriceAdditionalService = 0;
+                                    $nameService = "-";
+                                    $totalPriceService = 0;
+                                    foreach ($this->record->items as $key => $item) {
+                                        if ($item->is_additional == 0) {
+                                            $totalPriceService += $item->price;
+                                            $nameService = $item->name;
+                                        } else {
+                                            $totalPriceAdditionalService += $item->price;
+                                            $nameAdditionalService = $item->name;
+                                        }
+                                    }
+
+                                    $data = [
+                                        'invoice_id' => $this->record->invoice_id,
+                                        'cashier_name' => $this->record->createdBy->name,
+                                        'created_at' => $this->record->updated_at,
+                                        'service_name' => $nameService,
+                                        'amount_service' => $totalPriceService,
+                                        'amount_add_name' => $nameAdditionalService,
+                                        'amount_add' => $totalPriceAdditionalService,
+                                        'discount_name' => $this->record->discount->name,
+                                        'discount_price' => $this->record->discount->discount,
+                                        'total' => $this->record->amount,
+                                        'payment_method' => $this->record->payment_method,
+                                    ];
+                                    $pdf = Pdf::loadView('pdf.struct', ['data' => $data]);
+                                    return response()->streamDownload(function () use ($pdf) {
+                                        echo $pdf->stream();
+                                    }, 'Struct-' . $this->record->invoice_id . '.pdf');
                                 }
                             })
                     ])->fullWidth(),
