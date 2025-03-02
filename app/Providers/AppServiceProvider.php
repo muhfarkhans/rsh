@@ -39,7 +39,7 @@ class AppServiceProvider extends ServiceProvider
 
         FilamentView::registerRenderHook(
             PanelsRenderHook::USER_MENU_BEFORE,
-            fn(): string => Blade::render('<livewire:panel-shortcuts />'),
+            fn(): string => Blade::render('<livewire:panel-shortcuts /> <livewire:info-navbar />'),
         );
 
         if (str(config('app.url'))->startsWith('https://') || app()->environment('production')) {
