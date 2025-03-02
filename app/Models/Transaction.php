@@ -38,6 +38,16 @@ class Transaction extends Model
         return $this->belongsTo(TransactionDiscount::class, 'id', 'transaction_id');
     }
 
+    public function discountName()
+    {
+        return $this->belongsTo(TransactionDiscount::class, 'id', 'transaction_id');
+    }
+
+    public function discountPeriod()
+    {
+        return $this->belongsTo(TransactionDiscount::class, 'id', 'transaction_id');
+    }
+
     public function items()
     {
         return $this->hasMany(TransactionItem::class, 'transaction_id');

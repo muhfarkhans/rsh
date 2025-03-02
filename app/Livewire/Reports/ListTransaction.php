@@ -170,11 +170,6 @@ class ListTransaction extends Component implements HasForms, HasTable
                                     default => '-',
                                 };
                             }),
-                        Column::make('service_name')
-                            ->heading('Service Name')
-                            ->formatStateUsing(function ($state) {
-                                dd($state);
-                            }),
                         Column::make('itemServiceName')
                             ->heading('Therapy Service Name')
                             ->formatStateUsing(function ($state) {
@@ -227,6 +222,16 @@ class ListTransaction extends Component implements HasForms, HasTable
                                     return "-";
                                 }
                             }),
+                        Column::make('discount')
+                            ->heading('Discount')
+                            ->formatStateUsing(function ($state) {
+                                return $state->discount;
+                            }),
+                        Column::make('discountName')
+                            ->heading('Discount Name')
+                            ->formatStateUsing(function ($state) {
+                                return $state->name;
+                            }),
                         Column::make('clientVisit.client.reg_id')
                             ->heading('Client Reg Id'),
                         Column::make('clientVisit.client.name')
@@ -260,11 +265,6 @@ class ListTransaction extends Component implements HasForms, HasTable
                                         TransactionStatus::CANCEL => 'Dibatalkan',
                                         default => '-',
                                     };
-                                }),
-                            Column::make('service_name')
-                                ->heading('Service Name')
-                                ->formatStateUsing(function ($state) {
-                                    dd($state);
                                 }),
                             Column::make('itemServiceName')
                                 ->heading('Therapy Service Name')
@@ -317,6 +317,16 @@ class ListTransaction extends Component implements HasForms, HasTable
                                     } else {
                                         return "-";
                                     }
+                                }),
+                            Column::make('discount')
+                                ->heading('Discount')
+                                ->formatStateUsing(function ($state) {
+                                    return $state->discount;
+                                }),
+                            Column::make('discountName')
+                                ->heading('Discount Name')
+                                ->formatStateUsing(function ($state) {
+                                    return $state->name;
                                 }),
                             Column::make('clientVisit.client.reg_id')
                                 ->heading('Client Reg Id'),
