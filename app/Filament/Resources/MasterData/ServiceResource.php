@@ -54,8 +54,8 @@ class ServiceResource extends Resource
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('commision')
-                    ->label('Persentase Komisi')
-                    ->formatStateUsing(fn(string $state): string => $state . " %")
+                    ->label('Komisi')
+                    ->formatStateUsing(fn(string $state): string => __(Helper::rupiah($state)))
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('is_cupping')
