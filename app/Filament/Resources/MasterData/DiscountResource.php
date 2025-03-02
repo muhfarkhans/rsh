@@ -8,6 +8,7 @@ use App\Helpers\Helper;
 use App\Models\Discount;
 use Filament\Actions\Action;
 use Filament\Forms;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
@@ -116,14 +117,23 @@ class DiscountResource extends Resource
                 ->placeholder('Isi kode')
                 ->required()
                 ->unique(ignoreRecord: true)
-                ->columnSpanFull(),
+                ->columnSpan(1),
             TextInput::make('discount')
                 ->label('Harga diskon')
                 ->hint('Isi harga layanan')
                 ->required()
                 ->numeric()
                 ->prefix('Rp. ')
-                ->columnSpanFull(),
+                ->columnSpan(1),
+            DatePicker::make('started_at')
+                ->label('Periode Mulai')
+                ->required()
+                ->columnSpan(1),
+            DatePicker::make('ended_at')
+                ->label('Periode Selesai')
+                ->required()
+                ->afterOrEqual('started_at')
+                ->columnSpan(1),
             Toggle::make('is_active')
                 ->label('Diskon aktif?')
                 ->default(false)

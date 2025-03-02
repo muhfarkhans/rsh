@@ -14,6 +14,7 @@ use App\Models\Discount;
 use App\Models\Transaction;
 use App\Models\TransactionDiscount;
 use App\Models\UserService;
+use Carbon\Carbon;
 use Filament\Actions;
 use Filament\Forms\Components\Actions\Action;
 use Filament\Forms\Components\FileUpload;
@@ -103,6 +104,7 @@ class EditTransaction extends EditRecord
         $data['client_visit_created_at'] = $this->record->clientVisit->created_at;
         $data['client_services'] = $clientServices;
         $data['total'] = $this->record->amount;
+        $data['total_raw'] = $this->record->amount;
         $data['total_services'] = $totalPriceService;
         $data['total_additional'] = $totalPriceAdditionalService;
 
@@ -111,6 +113,7 @@ class EditTransaction extends EditRecord
             $data['total_discount'] = $this->record->total_discount;
             $data['discount_code_used'] = $discount->code;
             $data['total'] = $this->record->amount;
+            $data['discount_detail'] = '*Berhasil menggunakan diskon ' . $discount->name . ' dengan potongan ' . $discount->discount . '';
         }
 
         if ($data['payment_method'] == PaymentMethod::WAITING_FOR_PAYMENT) {
@@ -129,28 +132,55 @@ class EditTransaction extends EditRecord
         try {
             $discount = Discount::where('code', $code)->firstOrFail();
 
-            $set('discount', $discount->discount);
-            $set('total_discount', $discount->discount);
-            $set('discount_code', '');
-            $set('discount_code_used', $code);
+            $started_at = Carbon::parse($discount->started_at);
+            $ended_at = Carbon::parse($discount->ended_at);
 
-            $set('total', $get('total') - $discount->discount);
+            if (Carbon::now()->between($started_at, $ended_at) && $discount->is_active == 1) {
+                $set('discount', $discount->discount);
+                $set('total_discount', $discount->discount);
+                $set('discount_code', '');
+                $set('discount_code_used', $code);
+                $set('discount_detail', '*Berhasil menggunakan diskon ' . $discount->name . ' dengan potongan ' . $discount->discount . '');
 
-            Notification::make()
-                ->title('Discount ditemukan')
-                ->success()
-                ->body('Form berhasil diisi otomatis.')
-                ->send();
+                $set('total', $get('total_raw') - $discount->discount);
+
+                Notification::make()
+                    ->title('Diskon ditemukan')
+                    ->success()
+                    ->body(function () use ($discount) {
+                        return new HtmlString('
+                        <div>
+                            <p>Berhasil menggunakan diskon ' . $discount->name . ' dengan potongan ' . $discount->discount . '</p>
+                        </div>
+                    ');
+                    })
+                    ->send();
+            } else {
+                $set('discount', 0);
+                $set('total_discount', 0);
+                $set('discount_code', '');
+                $set('discount_code_used', '');
+                $set('discount_detail', '');
+
+                $set('total', $get('total_raw'));
+
+                Notification::make()
+                    ->title('Diskon tidak valid')
+                    ->warning()
+                    ->body('Diskon tidak tersedia atau sudah kadaluwarsa')
+                    ->send();
+            }
         } catch (\Throwable $th) {
             $set('discount', 0);
             $set('total_discount', 0);
             $set('discount_code', '');
             $set('discount_code_used', '');
+            $set('discount_detail', '');
 
-            $set('total', $get('total') - $get('discount'));
+            $set('total', $get('total_raw'));
 
             Notification::make()
-                ->title('Discount tidak ditemukan')
+                ->title('Diskon tidak ditemukan')
                 ->warning()
                 ->body('Mohon isi form secara manual.')
                 ->send();
@@ -272,6 +302,11 @@ class EditTransaction extends EditRecord
                                 '
                             );
                         })->columnSpanFull(),
+                    Placeholder::make('discount_detail')
+                        ->hiddenLabel()
+                        ->content(function ($state) {
+                            return $state;
+                        })->columnSpanFull(),
                     Placeholder::make('total')
                         ->label('Total')
                         ->inlineLabel()
@@ -283,6 +318,10 @@ class EditTransaction extends EditRecord
                                 '
                             );
                         })->columnSpanFull(),
+                    TextInput::make('total_raw')
+                        ->hidden()
+                        ->readOnly()
+                        ->columnSpanFull(),
                     TextInput::make('discount_code')
                         ->label('Kode Promo atau Diskon')
                         ->hidden(function () {

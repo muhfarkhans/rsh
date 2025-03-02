@@ -18,6 +18,8 @@ class Discount extends Model
         'code',
         'discount',
         'is_active',
+        'started_at',
+        'ended_at',
     ];
 
     public function createdBy(): BelongsTo
