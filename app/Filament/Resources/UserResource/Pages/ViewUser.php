@@ -5,6 +5,8 @@ namespace App\Filament\Resources\UserResource\Pages;
 use App\Filament\Resources\UserResource;
 use App\Helpers\FilamentHelper;
 use App\Models\User;
+use Auth;
+use DB;
 use Filament\Actions;
 use Filament\Infolists\Components\Grid;
 use Filament\Infolists\Components\Section;
@@ -12,7 +14,9 @@ use Filament\Infolists\Infolist;
 use Filament\Infolists\Components\Actions\Action;
 use Filament\Infolists\Components\Split;
 use Filament\Infolists\Components\TextEntry;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
+use Filament\Support\Enums\IconPosition;
 
 class ViewUser extends ViewRecord
 {
@@ -51,6 +55,45 @@ class ViewUser extends ViewRecord
                                     ->formatStateUsing(fn($state) => str($state)->headline()),
                                 TextEntry::make('created_at')->label('Created at'),
                                 TextEntry::make('updated_at')->label('Last updated at'),
+                                \Filament\Infolists\Components\Actions::make([
+                                    Action::make('reset_password')
+                                        ->requiresConfirmation()
+                                        ->action(function ($record) {
+                                            try {
+                                                DB::transaction(function () use ($record) {
+                                                    User::where('id', $record->id)->update([
+                                                        'password' => bcrypt($record->email)
+                                                    ]);
+
+                                                    DB::table('logs')->insert([
+                                                        'title' => "Reset Password",
+                                                        "description" => json_encode([
+                                                            "user" => Auth::user()->id,
+                                                            "detail" => "Request to reset password to user with id " . $record->id
+                                                        ]),
+                                                        "created_at" => now(),
+                                                        "updated_at" => now()
+                                                    ]);
+                                                });
+
+                                                Notification::make()
+                                                    ->title('Password berhasil direset')
+                                                    ->success()
+                                                    ->body('Silahkan login menggunakan password baru untuk user tersebut.')
+                                                    ->send();
+                                            } catch (\Throwable $th) {
+                                                Notification::make()
+                                                    ->title('Password gagal direset')
+                                                    ->warning()
+                                                    ->body('Terdapat kesalahan ketika reset password.')
+                                                    ->send();
+                                            }
+                                        })
+                                        ->label('Reset Password')
+                                        ->color('danger')
+                                        ->icon('heroicon-s-lock-closed')
+                                        ->iconPosition(IconPosition::After),
+                                ])->fullWidth(),
                             ])
                             ->columns(2)
                             ->columnSpan(2),
