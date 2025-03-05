@@ -82,7 +82,7 @@ class VisitResource extends Resource
                     ->getStateUsing(function ($record) {
                         return match ($record->status) {
                             VisitStatus::REGISTER => 'Pendaftaran',
-                            VisitStatus::WAITING_FOR_CHECK => 'Menunggu Check Up',
+                            VisitStatus::WAITING_FOR_CHECK => 'Menunggu pengkajian',
                             VisitStatus::WAITING_FOR_SERVICE => 'Menunggu layanan',
                             VisitStatus::ON_SERVICE => 'Dilakukan pelayanan',
                             VisitStatus::WAITING_FOR_PAYMENT => 'Menunggu pembayaran',

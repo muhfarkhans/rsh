@@ -80,7 +80,7 @@ class ListClientVisit extends Component implements HasForms, HasTable
                     ->getStateUsing(function ($record) {
                         return match ($record->status) {
                             VisitStatus::REGISTER => 'Pendaftaran',
-                            VisitStatus::WAITING_FOR_CHECK => 'Menunggu Check Up',
+                            VisitStatus::WAITING_FOR_CHECK => 'Menunggu Pengkajian',
                             VisitStatus::WAITING_FOR_SERVICE => 'Menunggu layanan',
                             VisitStatus::ON_SERVICE => 'Dilakukan pelayanan',
                             VisitStatus::WAITING_FOR_PAYMENT => 'Menunggu pembayaran',

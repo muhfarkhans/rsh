@@ -7,6 +7,7 @@ use App\Constants\VisitStatus;
 use App\Filament\App\Resources\TransactionResource;
 use App\Filament\App\Resources\VisitResource;
 use App\Helpers\FilamentHelper;
+use App\Helpers\Helper;
 use App\Jobs\EmailNewVisitJob;
 use App\Models\ClientVisit;
 use App\Models\Client;
@@ -57,12 +58,16 @@ class ViewVisit extends ViewRecord
                                     ->url(function (ClientVisit $record) {
                                         return VisitResource::getUrl('edit', ['record' => $record]);
                                     })
-                                    ->hidden(function () {
-                                        if (in_array(ConstRole::THERAPIST, Auth::user()->getRoleNames()->toArray())) {
-                                            return true;
+                                    ->visible(function () {
+                                        if (in_array($this->record->status, [VisitStatus::DONE, VisitStatus::WAITING_FOR_PAYMENT])) {
+                                            return false;
                                         }
 
-                                        return false;
+                                        if (in_array(ConstRole::THERAPIST, Auth::user()->getRoleNames()->toArray())) {
+                                            return false;
+                                        }
+
+                                        return true;
                                     })
                             ])
                             ->schema([
@@ -104,7 +109,7 @@ class ViewVisit extends ViewRecord
                                     })
                                     ->getStateUsing(function ($record) {
                                         return match ($record->status) {
-                                            VisitStatus::WAITING_FOR_CHECK => 'Menunggu check up',
+                                            VisitStatus::WAITING_FOR_CHECK => 'Menunggu pengkajian',
                                             VisitStatus::WAITING_FOR_SERVICE => 'Menunggu layanan',
                                             VisitStatus::ON_SERVICE => 'Dilakukan pelayanan',
                                             VisitStatus::WAITING_FOR_PAYMENT => 'Menunggu pembayaran',
@@ -144,7 +149,14 @@ class ViewVisit extends ViewRecord
                                                 if ($record->clientVisitCupping != null) {
                                                     return 'Edit dan Lihat Layanan';
                                                 } else {
-                                                    return 'Check Up dan Pilih Layanan';
+                                                    return 'Lakukan Pengkajian';
+                                                }
+                                            })
+                                            ->visible(function () {
+                                                if (in_array($this->record->status, [VisitStatus::DONE, VisitStatus::WAITING_FOR_PAYMENT])) {
+                                                    return false;
+                                                } else {
+                                                    return true;
                                                 }
                                             })
                                             ->color('success')
@@ -152,16 +164,16 @@ class ViewVisit extends ViewRecord
                                             ->iconPosition(IconPosition::After)
                                     ])->fullWidth(),
                                     \Filament\Infolists\Components\Actions::make([
-                                        Action::make('viewcuppingpoint')
+                                        Action::make('startservice')
                                             ->label('Mulai Layanan')
                                             ->color('info')
                                             ->iconPosition(IconPosition::After)
-                                            ->hidden(function (ClientVisit $record) {
+                                            ->visible(function (ClientVisit $record) {
                                                 if ($record->clientVisitCupping === null) {
-                                                    return true;
+                                                    return false;
                                                 }
 
-                                                return !($record->status == VisitStatus::WAITING_FOR_SERVICE);
+                                                return ($record->status == VisitStatus::WAITING_FOR_SERVICE);
                                             })
                                             ->action(function (ClientVisit $record, array $data) {
                                                 DB::transaction(function () use ($record, $data) {
@@ -205,16 +217,16 @@ class ViewVisit extends ViewRecord
                                             }),
                                     ])->fullWidth(),
                                     \Filament\Infolists\Components\Actions::make([
-                                        Action::make('viewcuppingpoint')
+                                        Action::make('finishservice')
                                             ->label('Selesaikan Layanan')
                                             ->color('danger')
                                             ->iconPosition(IconPosition::After)
-                                            ->hidden(function (ClientVisit $record) {
+                                            ->visible(function (ClientVisit $record) {
                                                 if ($record->clientVisitCupping === null) {
-                                                    return true;
+                                                    return false;
                                                 }
 
-                                                return !($record->status == VisitStatus::ON_SERVICE);
+                                                return ($record->status == VisitStatus::ON_SERVICE);
                                             })
                                             ->action(function (ClientVisit $record, array $data) {
                                                 DB::transaction(function () use ($record, $data) {
@@ -270,24 +282,74 @@ class ViewVisit extends ViewRecord
                                             ->color('info')
                                             ->icon('heroicon-m-map-pin')
                                             ->iconPosition(IconPosition::After)
-                                            ->hidden(function (ClientVisit $record) {
+                                            ->visible(function (ClientVisit $record) {
                                                 if ($record->clientVisitCupping === null) {
-                                                    return true;
+                                                    return false;
                                                 }
 
-                                                return $record->clientVisitCupping->service->is_cupping === 0;
-                                            }),
+                                                return $record->clientVisitCupping->service->is_cupping !== 0;
+                                            })
                                     ])->fullWidth(),
-                                    // \Filament\Infolists\Components\Actions::make([
-                                    //     Action::make('viewcuppingpoint')
-                                    //         ->url(function (ClientVisit $record) {
-                                    //             return url('') . '/pdf/12';
-                                    //         })
-                                    //         ->label('Generate PDF')
-                                    //         ->color('info')
-                                    //         ->icon('heroicon-m-document-arrow-down')
-                                    //         ->iconPosition(IconPosition::After),
-                                    // ])->fullWidth(),
+                                    \Filament\Infolists\Components\Actions::make([
+                                        Action::make('generatepdf')
+                                            ->action(function () {
+                                                $data = [
+                                                    'client_reg_id' => $this->record->client->reg_id,
+                                                    'transaction_invoice_id' => $this->record->transactions->last()->invoice_id,
+                                                    'client_name' => $this->record->client->reg_id,
+                                                    'client_phone' => $this->record->client->phone,
+                                                    'client_gender' => $this->record->client->gender,
+                                                    'client_year' => $this->record->client->birthdate,
+                                                    'job' => $this->record->client->job,
+                                                    'address' => $this->record->client->address,
+                                                    'visit_complaint' => $this->record->complaint,
+                                                    'visit_medical_history' => $this->record->medical_history,
+                                                    'visit_family_medical_history' => $this->record->family_medical_history,
+                                                    'visit_medication_history' => $this->record->medication_history,
+                                                    'visit_sleep_start' => $this->record->sleep_habits['start'],
+                                                    'visit_sleep_end' => $this->record->sleep_habits['end'],
+                                                    'visit_exercise_name' => $this->record->exercise['name'],
+                                                    'visit_exercise_intensity' => $this->record->exercise['intensity'],
+                                                    'visit_exercise_time' => $this->record->exercise['time'],
+                                                    'visit_nutrition_name' => $this->record->nutrition['name'],
+                                                    'visit_nutrition_portion' => $this->record->nutrition['portion'],
+                                                    'visit_nutrition_time' => $this->record->nutrition['time'],
+                                                    'visit_nutrition_type' => is_array($this->record->nutrition['type']) ? $this->record->nutrition['type'] : [],
+                                                    'visit_spiritual_name' => $this->record->spiritual['name'],
+                                                    'visit_spiritual_type' => is_array($this->record->nutrition['type']) ? $this->record->nutrition['type'] : [],
+                                                    'visit_check_temperature' => $this->record->clientVisitCheck->temperature ?? 0,
+                                                    'visit_check_blood_pressure' => $this->record->clientVisitCheck->blood_pressure ?? 0,
+                                                    'visit_check_pulse' => $this->record->clientVisitCheck->pulse ?? 0,
+                                                    'visit_check_respiratory' => $this->record->clientVisitCheck->respiratory ?? 0,
+                                                    'visit_check_weight' => $this->record->clientVisitCheck->weight ?? 0 . " Kg",
+                                                    'visit_check_height' => $this->record->clientVisitCheck->height ?? 0 . " cm",
+                                                    'visit_check_other' => $this->record->clientVisitCheck->check_other ?? "",
+                                                    'visit_diagnose' => $this->record->diagnose,
+                                                    'service_name' => $this->record->clientVisitCupping->service->name,
+                                                    'service_price' => $this->record->clientVisitCupping->service->price,
+                                                    'service_therapist' => $this->record->clientVisitCupping->therapist->name,
+                                                    'client_name_related' => $this->record->relation_as,
+                                                    'signature_therapist' => Helper::getFileAsBase64($this->record->signature_therapist),
+                                                    'signature_client' => Helper::getFileAsBase64($this->record->signature_client),
+                                                ];
+
+                                                $pdf = Pdf::loadView('pdf.detail', ['data' => $data]);
+                                                return response()->streamDownload(function () use ($pdf) {
+                                                    echo $pdf->stream();
+                                                }, 'Detail-' . '.pdf');
+                                            })
+                                            ->visible(function () {
+                                                if (count($this->record->transactions) > 0) {
+                                                    return true;
+                                                } else {
+                                                    return false;
+                                                }
+                                            })
+                                            ->label('Generate PDF')
+                                            ->color('info')
+                                            ->icon('heroicon-m-document-arrow-down')
+                                            ->iconPosition(IconPosition::After),
+                                    ])->fullWidth(),
                                 ])
                                 ->columnSpan(1),
                             Section::make('Detail Invoice')
@@ -448,7 +510,7 @@ class ViewVisit extends ViewRecord
                             ->schema([
                                 TextEntry::make('temperature')
                                     ->label('Suhu')
-                                    ->getStateUsing(fn($record) => ($record->clientVisitCheck ? $record->clientVisitCheck->check_other : 0))
+                                    ->getStateUsing(fn($record) => ($record->clientVisitCheck ? $record->clientVisitCheck->temperature : 0))
                                     ->extraAttributes(FilamentHelper::textEntryExtraAttributes())
                                     ->default("-")
                                     ->columnSpan([
@@ -511,7 +573,7 @@ class ViewVisit extends ViewRecord
                                     ]),
                                 TextEntry::make('check_other')
                                     ->label('Pemeriksaan lainnya')
-                                    ->getStateUsing(fn($record) => ($record->clientVisitCheck ? $record->clientVisitCheck->check_other : "-"))
+                                    ->getStateUsing(fn($record) => ($record->clientVisitCheck ? $record->clientVisitCheck->check_other : 0))
                                     ->extraAttributes(FilamentHelper::textEntryExtraAttributes())
                                     ->default("-")
                                     ->columnSpan([

@@ -29,7 +29,7 @@ class ListVisits extends ListRecords
     {
         $dataStatus = [
             VisitStatus::REGISTER => 'Pendaftaran',
-            VisitStatus::WAITING_FOR_CHECK => 'Menunggu Check Up',
+            VisitStatus::WAITING_FOR_CHECK => 'Menunggu Pengkajian',
             VisitStatus::WAITING_FOR_SERVICE => 'Menunggu layanan',
             VisitStatus::ON_SERVICE => 'Dilakukan pelayanan',
             VisitStatus::WAITING_FOR_PAYMENT => 'Menunggu pembayaran',

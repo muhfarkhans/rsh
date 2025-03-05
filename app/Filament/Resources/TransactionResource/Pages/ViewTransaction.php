@@ -6,8 +6,10 @@ use App\Constants\PaymentMethod;
 use App\Constants\TransactionStatus;
 use App\Filament\Resources\TransactionResource;
 use App\Models\Transaction;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Filament\Actions;
 use Filament\Infolists\Components\Grid;
+use Filament\Infolists\Components\ImageEntry;
 use Filament\Infolists\Components\RepeatableEntry;
 use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
@@ -33,6 +35,63 @@ class ViewTransaction extends ViewRecord
                                 ->icon('heroicon-o-pencil')
                                 ->url(function (Transaction $record) {
                                     return TransactionResource::getUrl('edit', ['record' => $record]);
+                                })
+                                ->visible(function () {
+                                    if (in_array($this->record->status, [TransactionStatus::WAITING_FOR_PAYMENT])) {
+                                        return true;
+                                    } else {
+                                        return false;
+                                    }
+                                }),
+                            Action::make('download_struck')
+                                ->label(function () {
+                                    return "Download Struk";
+                                })
+                                ->visible(function () {
+                                    if (in_array($this->record->status, [TransactionStatus::PAID])) {
+                                        return true;
+                                    } else {
+                                        return false;
+                                    }
+                                })
+                                ->action(function () {
+                                    $nameAdditionalService = "-";
+                                    $totalPriceAdditionalService = 0;
+                                    $nameService = "-";
+                                    $totalPriceService = 0;
+                                    foreach ($this->record->items as $key => $item) {
+                                        if ($item->is_additional == 0) {
+                                            $totalPriceService += $item->price;
+                                            $nameService = $item->name;
+                                        } else {
+                                            $totalPriceAdditionalService += $item->price;
+                                            $nameAdditionalService = $item->name;
+                                        }
+                                    }
+
+                                    $data = [
+                                        'invoice_id' => $this->record->invoice_id,
+                                        'cashier_name' => $this->record->createdBy->name,
+                                        'created_at' => $this->record->updated_at,
+                                        'service_name' => $nameService,
+                                        'amount_service' => $totalPriceService,
+                                        'amount_add_name' => $nameAdditionalService,
+                                        'amount_add' => $totalPriceAdditionalService,
+                                        'discount_name' => "",
+                                        'discount_price' => 0,
+                                        'total' => $this->record->amount,
+                                        'payment_method' => $this->record->payment_method,
+                                    ];
+
+                                    if ($this->record->discount != null) {
+                                        $data['discount_name'] = $this->record->discount->name;
+                                        $data['discount_price'] = $this->record->discount->discount;
+                                    }
+
+                                    $pdf = Pdf::loadView('pdf.struct', ['data' => $data]);
+                                    return response()->streamDownload(function () use ($pdf) {
+                                        echo $pdf->stream();
+                                    }, 'Struct-' . $this->record->invoice_id . '.pdf');
                                 })
                         ])
                         ->description('Informasi client dan layanan')
@@ -119,6 +178,22 @@ class ViewTransaction extends ViewRecord
                                 );
                             })
                             ->columnSpanFull(),
+                        TextEntry::make('discount')
+                            ->label('Diskon')
+                            ->extraAttributes(['style' => 'text-align: right;'])
+                            ->state(function ($record) {
+                                $discount = 0;
+                                if ($record->discount != null) {
+                                    $discount = $record->discount->discount;
+                                }
+
+                                return new HtmlString(
+                                    '
+                                    <h1 style="color: red">Rp. ' . number_format($discount, 0, ',', '.') . '</h1>
+                                    '
+                                );
+                            })
+                            ->columnSpanFull(),
                         TextEntry::make('total')
                             ->label('Total')
                             ->extraAttributes(['style' => 'text-align:right;font-size:1.25em;font-weight:bold;'])
@@ -134,7 +209,7 @@ class ViewTransaction extends ViewRecord
                             ->label('Metode Pembayaran')
                             ->badge()
                             ->color(function ($record) {
-                                return match ($record->status) {
+                                return match ($record->payment_method) {
                                     PaymentMethod::WAITING_FOR_PAYMENT => 'success',
                                     PaymentMethod::CASH => 'info',
                                     PaymentMethod::QRIS => 'info',
@@ -142,7 +217,7 @@ class ViewTransaction extends ViewRecord
                                 };
                             })
                             ->getStateUsing(function ($record) {
-                                return match ($record->status) {
+                                return match ($record->payment_method) {
                                     PaymentMethod::WAITING_FOR_PAYMENT => 'Menunggu pembayaran',
                                     PaymentMethod::CASH => 'Cash',
                                     PaymentMethod::QRIS => 'Qris',
@@ -170,22 +245,22 @@ class ViewTransaction extends ViewRecord
                                 };
                             })
                             ->columnSpanFull(),
+                        ImageEntry::make('photo')
+                            ->extraImgAttributes(['style' => 'width: 100%'])
+                            ->columnSpanFull()
+                            ->visible(function ($record) {
+                                if ($record->payment_method == PaymentMethod::QRIS) {
+                                    return true;
+                                }
+
+                                return false;
+                            }),
                         TextEntry::make('createdBy.name')
                             ->label('Cashier Name')
                             ->columnSpanFull(),
                         TextEntry::make('updated_at')
-                            ->hiddenLabel()
-                            ->hint(function ($state) {
-                                return new HtmlString(
-                                    '
-                                    <div style="">
-                                    <p>Update terakhir </p>
-                                    ' . $state . '
-                                    <p>*tombol save digunakan ketika layanan sudah diberikan</p>
-                                    </div>'
-                                );
-                            }),
-                    ])->columnSpan(1),
+                            ->label('Update terakhir')
+                    ])->columnSpan(1)
                 ])
             ]);
     }

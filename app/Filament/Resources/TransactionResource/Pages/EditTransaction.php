@@ -409,18 +409,18 @@ class EditTransaction extends EditRecord
 
                             return true;
                         }),
-                    Select::make('status')
-                        ->label('Status')
-                        ->options(TransactionStatus::getLabels())
-                        ->required()
-                        ->disabled(function () {
-                            if ($this->record->status == TransactionStatus::PAID) {
-                                return true;
-                            } else {
-                                return false;
-                            }
-                        })
-                        ->columnSpanFull(),
+                    // Select::make('status')
+                    //     ->label('Status')
+                    //     ->options(TransactionStatus::getLabels())
+                    //     ->required()
+                    //     ->disabled(function () {
+                    //         if ($this->record->status == TransactionStatus::PAID) {
+                    //             return true;
+                    //         } else {
+                    //             return false;
+                    //         }
+                    //     })
+                    //     ->columnSpanFull(),
                     Placeholder::make('createdBy.name')
                         ->label('Cashier Name')
                         ->visible(function ($state) {
@@ -457,9 +457,11 @@ class EditTransaction extends EditRecord
                                     $livewire->save();
 
                                     $transaction = DB::transaction(function () use ($get, $record) {
-                                        if ($get('status') == TransactionStatus::PAID) {
-                                            ClientVisit::where('id', $record->clientVisit->id)->update(['status' => VisitStatus::DONE]);
-                                        }
+                                        ClientVisit::where('id', $record->clientVisit->id)->update(['status' => VisitStatus::DONE]);
+
+                                        $dataTransaction = [
+                                            'status' => TransactionStatus::PAID
+                                        ];
 
                                         if ($get('discount') != null) {
                                             $discount = Discount::where('code', $get('discount_code_used'))->first();
@@ -471,8 +473,9 @@ class EditTransaction extends EditRecord
                                                 'code' => $discount->code,
                                             ]);
 
-                                            Transaction::where('id', $record->id)->update(['amount' => $record->amount - $discount->discount]);
+                                            $dataTransaction['amount'] = $record->amount - $discount->discount;
                                         }
+                                        Transaction::where('id', $record->id)->update($dataTransaction);
 
                                         return Transaction::where('id', $record->id)->first();
                                     });
@@ -540,11 +543,17 @@ class EditTransaction extends EditRecord
                                         'amount_service' => $totalPriceService,
                                         'amount_add_name' => $nameAdditionalService,
                                         'amount_add' => $totalPriceAdditionalService,
-                                        'discount_name' => $this->record->discount->name,
-                                        'discount_price' => $this->record->discount->discount,
+                                        'discount_name' => "",
+                                        'discount_price' => 0,
                                         'total' => $this->record->amount,
                                         'payment_method' => $this->record->payment_method,
                                     ];
+
+                                    if ($this->record->discount != null) {
+                                        $data['discount_name'] = $this->record->discount->name;
+                                        $data['discount_price'] = $this->record->discount->discount;
+                                    }
+
                                     $pdf = Pdf::loadView('pdf.struct', ['data' => $data]);
                                     return response()->streamDownload(function () use ($pdf) {
                                         echo $pdf->stream();

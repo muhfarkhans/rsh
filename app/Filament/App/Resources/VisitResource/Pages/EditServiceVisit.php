@@ -118,7 +118,8 @@ class EditServiceVisit extends EditRecord
 
         if ($this->record->clientVisitCheck) {
             $data['temperature'] = $this->record->clientVisitCheck->temperature;
-            $data['blood_pressure'] = $this->record->clientVisitCheck->blood_pressure;
+            $data['sistolik'] = explode("-", $this->record->clientVisitCheck->blood_pressure)[0];
+            $data['diastolik'] = explode("-", $this->record->clientVisitCheck->blood_pressure)[1];
             $data['pulse'] = $this->record->clientVisitCheck->pulse;
             $data['respiratory'] = $this->record->clientVisitCheck->respiratory;
             $data['height'] = $this->record->clientVisitCheck->height;
@@ -176,7 +177,7 @@ class EditServiceVisit extends EditRecord
             $dataClientCheck = [
                 'client_visit_id' => $record->id,
                 'temperature' => $data['temperature'],
-                'blood_pressure' => $data['sistolik'] / $data['diastolik'],
+                'blood_pressure' => $data['sistolik'] . "-" . $data['diastolik'],
                 'pulse' => $data['pulse'],
                 'respiratory' => $data['respiratory'],
                 'weight' => $data['weight'],
@@ -357,7 +358,6 @@ class EditServiceVisit extends EditRecord
                             ]),
                         TextInput::make('temperature')
                             ->label('Suhu')
-                            ->default(fn() => $this->record->clientVisitCheck ? $this->record->clientVisitCheck->temperature : 0)
                             ->required()
                             ->numeric()
                             ->columnSpan([
@@ -367,7 +367,7 @@ class EditServiceVisit extends EditRecord
                             ]),
                         TextInput::make('pulse')
                             ->label('Nadi')
-                            ->default(fn() => $this->record->clientVisitCheck ? $this->record->clientVisitCheck->pulse : 0)
+                            ->default(1212)
                             ->required()
                             ->numeric()
                             ->columnSpan([
@@ -377,7 +377,6 @@ class EditServiceVisit extends EditRecord
                             ]),
                         TextInput::make('sistolik')
                             ->label('Sistolik')
-                            ->default(fn() => $this->record->clientVisitCheck ? $this->record->clientVisitCheck->blood_pressure : 0)
                             ->required()
                             ->numeric()
                             ->suffix('mm/Hg')
@@ -388,7 +387,6 @@ class EditServiceVisit extends EditRecord
                             ]),
                         TextInput::make('diastolik')
                             ->label('Diastolik')
-                            ->default(fn() => $this->record->clientVisitCheck ? $this->record->clientVisitCheck->blood_pressure : 0)
                             ->required()
                             ->numeric()
                             ->suffix('mm/Hg')
@@ -399,7 +397,6 @@ class EditServiceVisit extends EditRecord
                             ]),
                         TextInput::make('respiratory')
                             ->label('Frekuensi nafas')
-                            ->default(fn() => $this->record->clientVisitCheck ? $this->record->clientVisitCheck->respiratory : 0)
                             ->required()
                             ->numeric()
                             ->columnSpan([
@@ -409,7 +406,6 @@ class EditServiceVisit extends EditRecord
                             ]),
                         TextInput::make('weight')
                             ->label('Berat Badan')
-                            ->default(fn() => $this->record->clientVisitCheck ? $this->record->clientVisitCheck->weight : 0)
                             ->required()
                             ->numeric()
                             ->suffix('Kg')
@@ -420,7 +416,6 @@ class EditServiceVisit extends EditRecord
                             ]),
                         TextInput::make('height')
                             ->label('Tinggi badan')
-                            ->default(fn() => $this->record->clientVisitCheck ? $this->record->clientVisitCheck->height : 0)
                             ->required()
                             ->numeric()
                             ->suffix('cm')
@@ -431,7 +426,6 @@ class EditServiceVisit extends EditRecord
                             ]),
                         Textarea::make('checks_other')
                             ->label('Pemeriksaan lainnya')
-                            ->default(fn() => $this->record->clientVisitCheck ? $this->record->clientVisitCheck->check_other : 0)
                             ->columnSpan([
                                 'default' => 4,
                                 'md' => 4,
