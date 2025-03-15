@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\App\Pages\LoginAdmin;
 use App\Filament\Resources\SettingResource;
 use App\Livewire\LatestVisitors;
 use App\Livewire\StatsVisitor;
@@ -35,7 +36,7 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
-            ->login()
+            ->login(LoginAdmin::class)
             ->colors([
                 'primary' => Color::Indigo,
             ])

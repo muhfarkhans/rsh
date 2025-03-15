@@ -9,16 +9,16 @@ use Filament\Forms\Components\Component;
 use Filament\Pages\Auth\Login as BaseAuth;
 use Filament\Forms\Components\Actions\Action;
 
-class Login extends BaseAuth
+class LoginAdmin extends BaseAuth
 {
     public function form(Form $form): Form
     {
         return $form
             ->schema([
                 Actions::make([
-                    Action::make('or sign in as Admin?')
+                    Action::make('or sign in as Therapist and Cashier?')
                         ->link()
-                        ->url(route('filament.admin.pages.dashboard'))
+                        ->url(route('filament.app.pages.dashboard'))
                 ])->fullWidth(),
                 $this->getEmailFormComponent(),
                 $this->getPasswordFormComponent(),
