@@ -4,6 +4,7 @@ namespace App\Livewire\Reports;
 
 use App\Constants\Role;
 use App\Constants\TransactionStatus;
+use App\Filament\Exports\TransactionExporter;
 use App\Filament\Resources\TransactionResource;
 use App\Models\Transaction;
 use App\Models\User;
@@ -12,6 +13,7 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Tables\Actions\BulkActionGroup;
 use Filament\Tables\Actions\DeleteBulkAction;
 use Filament\Tables\Actions\EditAction;
+use Filament\Tables\Actions\ExportAction;
 use Filament\Tables\Actions\ViewAction;
 use Livewire\Component;
 use Filament\Forms\Concerns\InteractsWithForms;
@@ -25,10 +27,10 @@ use Filament\Tables\Filters\Indicator;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
-use pxlrbt\FilamentExcel\Actions\Tables\ExportAction;
-use pxlrbt\FilamentExcel\Exports\ExcelExport;
-use pxlrbt\FilamentExcel\Columns\Column;
+// use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
+// use pxlrbt\FilamentExcel\Actions\Tables\ExportAction;
+// use pxlrbt\FilamentExcel\Exports\ExcelExport;
+// use pxlrbt\FilamentExcel\Columns\Column;
 
 class ListTransaction extends Component implements HasForms, HasTable
 {
@@ -152,196 +154,13 @@ class ListTransaction extends Component implements HasForms, HasTable
                     ->url(fn(Transaction $record) => TransactionResource::getUrl('view', ['record' => $record->id]))
             ])
             ->headerActions([
-                ExportAction::make()->exports([
-                    ExcelExport::make()->withColumns([
-                        Column::make('invoice_id')
-                            ->heading('Invoice'),
-                        Column::make('amount')
-                            ->heading('Amount'),
-                        Column::make('payment_method')
-                            ->heading('Payment Method'),
-                        Column::make('status')
-                            ->heading('Status')
-                            ->formatStateUsing(function ($state) {
-                                return match ($state) {
-                                    TransactionStatus::WAITING_FOR_PAYMENT => 'Menunggu pembayaran',
-                                    TransactionStatus::PAID => 'Lunas',
-                                    TransactionStatus::CANCEL => 'Dibatalkan',
-                                    default => '-',
-                                };
-                            }),
-                        Column::make('itemServiceName')
-                            ->heading('Therapy Service Name')
-                            ->formatStateUsing(function ($state) {
-                                $notAdditionalTransactions = array_filter($state->toArray(), function ($transaction) {
-                                    return $transaction['is_additional'] == 0;
-                                });
-                                $notAdditionalTransactions = array_values($notAdditionalTransactions);
-                                if (count($notAdditionalTransactions) > 0) {
-                                    return $notAdditionalTransactions[0]['name'];
-                                } else {
-                                    return "-";
-                                }
-                            }),
-                        Column::make('itemServicePrice')
-                            ->heading('Therapy Service Price')
-                            ->formatStateUsing(function ($state) {
-                                $notAdditionalTransactions = array_filter($state->toArray(), function ($transaction) {
-                                    return $transaction['is_additional'] == 0;
-                                });
-                                $notAdditionalTransactions = array_values($notAdditionalTransactions);
-                                if (count($notAdditionalTransactions) > 0) {
-                                    return $notAdditionalTransactions[0]['price'];
-                                } else {
-                                    return "-";
-                                }
-                            }),
-                        Column::make('itemServiceAddName')
-                            ->heading('Therapy Service Add')
-                            ->formatStateUsing(function ($state) {
-                                $notAdditionalTransactions = array_filter($state->toArray(), function ($transaction) {
-                                    return $transaction['is_additional'] == 1;
-                                });
-                                $notAdditionalTransactions = array_values($notAdditionalTransactions);
-                                if (count($notAdditionalTransactions) > 0) {
-                                    return $notAdditionalTransactions[0]['name'];
-                                } else {
-                                    return "-";
-                                }
-                            }),
-                        Column::make('itemServiceAddPrice')
-                            ->heading('Therapy Service Add Price')
-                            ->formatStateUsing(function ($state) {
-                                $notAdditionalTransactions = array_filter($state->toArray(), function ($transaction) {
-                                    return $transaction['is_additional'] == 1;
-                                });
-                                $notAdditionalTransactions = array_values($notAdditionalTransactions);
-                                if (count($notAdditionalTransactions) > 0) {
-                                    return $notAdditionalTransactions[0]['price'];
-                                } else {
-                                    return "-";
-                                }
-                            }),
-                        Column::make('discount')
-                            ->heading('Discount')
-                            ->formatStateUsing(function ($state) {
-                                return $state->discount;
-                            }),
-                        Column::make('discountName')
-                            ->heading('Discount Name')
-                            ->formatStateUsing(function ($state) {
-                                return $state->name;
-                            }),
-                        Column::make('clientVisit.client.reg_id')
-                            ->heading('Client Reg Id'),
-                        Column::make('clientVisit.client.name')
-                            ->heading('Client Name'),
-                        Column::make('clientVisit.therapy.name')
-                            ->heading('Therapy Name'),
-                        Column::make('clientVisit.createdBy.name')
-                            ->heading('Admin Name'),
-                        Column::make('created_at')
-                            ->heading('Created At'),
-                    ])->withFilename(date('Y-m-d') . '-Transaksi'),
-                ]),
-            ])
-            ->bulkActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make(),
-                    ExportBulkAction::make()->exports([
-                        ExcelExport::make()->withColumns([
-                            Column::make('invoice_id')
-                                ->heading('Invoice'),
-                            Column::make('amount')
-                                ->heading('Amount'),
-                            Column::make('payment_method')
-                                ->heading('Payment Method'),
-                            Column::make('status')
-                                ->heading('Status')
-                                ->formatStateUsing(function ($state) {
-                                    return match ($state) {
-                                        TransactionStatus::WAITING_FOR_PAYMENT => 'Menunggu pembayaran',
-                                        TransactionStatus::PAID => 'Lunas',
-                                        TransactionStatus::CANCEL => 'Dibatalkan',
-                                        default => '-',
-                                    };
-                                }),
-                            Column::make('itemServiceName')
-                                ->heading('Therapy Service Name')
-                                ->formatStateUsing(function ($state) {
-                                    $notAdditionalTransactions = array_filter($state->toArray(), function ($transaction) {
-                                        return $transaction['is_additional'] == 0;
-                                    });
-                                    $notAdditionalTransactions = array_values($notAdditionalTransactions);
-                                    if (count($notAdditionalTransactions) > 0) {
-                                        return $notAdditionalTransactions[0]['name'];
-                                    } else {
-                                        return "-";
-                                    }
-                                }),
-                            Column::make('itemServicePrice')
-                                ->heading('Therapy Service Price')
-                                ->formatStateUsing(function ($state) {
-                                    $notAdditionalTransactions = array_filter($state->toArray(), function ($transaction) {
-                                        return $transaction['is_additional'] == 0;
-                                    });
-                                    $notAdditionalTransactions = array_values($notAdditionalTransactions);
-                                    if (count($notAdditionalTransactions) > 0) {
-                                        return $notAdditionalTransactions[0]['price'];
-                                    } else {
-                                        return "-";
-                                    }
-                                }),
-                            Column::make('itemServiceAddName')
-                                ->heading('Therapy Service Add')
-                                ->formatStateUsing(function ($state) {
-                                    $notAdditionalTransactions = array_filter($state->toArray(), function ($transaction) {
-                                        return $transaction['is_additional'] == 1;
-                                    });
-                                    $notAdditionalTransactions = array_values($notAdditionalTransactions);
-                                    if (count($notAdditionalTransactions) > 0) {
-                                        return $notAdditionalTransactions[0]['name'];
-                                    } else {
-                                        return "-";
-                                    }
-                                }),
-                            Column::make('itemServiceAddPrice')
-                                ->heading('Therapy Service Add Price')
-                                ->formatStateUsing(function ($state) {
-                                    $notAdditionalTransactions = array_filter($state->toArray(), function ($transaction) {
-                                        return $transaction['is_additional'] == 1;
-                                    });
-                                    $notAdditionalTransactions = array_values($notAdditionalTransactions);
-                                    if (count($notAdditionalTransactions) > 0) {
-                                        return $notAdditionalTransactions[0]['price'];
-                                    } else {
-                                        return "-";
-                                    }
-                                }),
-                            Column::make('discount')
-                                ->heading('Discount')
-                                ->formatStateUsing(function ($state) {
-                                    return $state->discount;
-                                }),
-                            Column::make('discountName')
-                                ->heading('Discount Name')
-                                ->formatStateUsing(function ($state) {
-                                    return $state->name;
-                                }),
-                            Column::make('clientVisit.client.reg_id')
-                                ->heading('Client Reg Id'),
-                            Column::make('clientVisit.client.name')
-                                ->heading('Client Name'),
-                            Column::make('clientVisit.therapy.name')
-                                ->heading('Therapy Name'),
-                            Column::make('clientVisit.createdBy.name')
-                                ->heading('Admin Name'),
-                            Column::make('created_at')
-                                ->heading('Created At'),
-                        ])->withFilename('Transaksi'),
-                    ])
-                ]),
+                ExportAction::make()
+                    ->exporter(TransactionExporter::class)
             ]);
+        // ->bulkActions([
+        //     BulkActionGroup::make([
+        //     ]),
+        // ]);
     }
 
     public function render()

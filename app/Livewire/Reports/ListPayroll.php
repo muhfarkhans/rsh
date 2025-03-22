@@ -4,6 +4,7 @@ namespace App\Livewire\Reports;
 
 use App\Constants\Role;
 use App\Constants\TransactionStatus;
+use App\Filament\Exports\PayrollExporter;
 use App\Filament\Resources\TransactionResource;
 use App\Helpers\Helper;
 use App\Models\Transaction;
@@ -14,6 +15,7 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Tables\Actions\BulkActionGroup;
 use Filament\Tables\Actions\DeleteBulkAction;
 use Filament\Tables\Actions\EditAction;
+use Filament\Tables\Actions\ExportAction;
 use Filament\Tables\Actions\ViewAction;
 use Livewire\Component;
 use Filament\Forms\Concerns\InteractsWithForms;
@@ -27,10 +29,6 @@ use Filament\Tables\Filters\Indicator;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
-use pxlrbt\FilamentExcel\Actions\Tables\ExportAction;
-use pxlrbt\FilamentExcel\Exports\ExcelExport;
-use pxlrbt\FilamentExcel\Columns\Column;
 
 class ListPayroll extends Component implements HasForms, HasTable
 {
@@ -131,33 +129,8 @@ class ListPayroll extends Component implements HasForms, HasTable
                 //     ->url(fn(Transaction $record) => TransactionResource::getUrl('view', ['record' => $record->id]))
             ])
             ->headerActions([
-                ExportAction::make()->exports([
-                    ExcelExport::make()->withColumns([
-                        Column::make('name')
-                            ->heading('Nama'),
-                        Column::make('commision')
-                            ->heading('Komisi'),
-                        Column::make('total_service')
-                            ->heading('Total Service'),
-                    ])
-                        ->modifyQueryUsing(fn($query) => $query->select('users.id', 'users.name')
-                            ->selectRaw('sum(services.commision) AS commision')
-                            ->selectRaw('count(client_visits.id) AS total_service')
-                            ->join('model_has_roles', 'model_has_roles.model_id', '=', 'users.id')
-                            ->join('client_visits', 'client_visits.therapy_id', '=', 'users.id')
-                            ->join('transactions', 'transactions.client_visit_id', '=', 'client_visits.id')
-                            ->join('client_visit_cuppings', 'client_visit_cuppings.client_visit_id', '=', 'client_visits.id')
-                            ->join('services', 'services.id', '=', 'client_visit_cuppings.service_id')
-                            ->where('model_has_roles.role_id', 2)
-                            ->where('transactions.status', 'paid')
-                            ->groupBy('users.id', 'users.name'))
-                        ->withFilename(date('Y-m-d') . '-Payroll'),
-                ]),
-            ])
-            ->bulkActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make(),
-                ]),
+                ExportAction::make()
+                    ->exporter(PayrollExporter::class)
             ]);
     }
 

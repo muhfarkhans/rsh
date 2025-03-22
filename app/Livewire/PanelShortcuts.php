@@ -75,7 +75,7 @@ class PanelShortcuts extends Component implements HasForms, HasActions
     {
         if ($this->isAdmin()) {
             return <<<'HTML'
-            <div>
+            <div style="margin-left: 10px">
             {{ $this->renderAction }}
             </div>
             HTML;
