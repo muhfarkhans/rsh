@@ -540,6 +540,7 @@ class EditTransaction extends EditRecord
 
                                     $data = [
                                         'invoice_id' => $this->record->invoice_id,
+                                        'client_name' => $this->record->clientVisit->client->name,
                                         'cashier_name' => $this->record->createdBy->name,
                                         'created_at' => $this->record->updated_at,
                                         'service_name' => $nameService,

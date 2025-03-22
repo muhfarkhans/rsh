@@ -110,6 +110,10 @@
                         <td class="w-half text-right">{{ $data['invoice_id'] }}</td>
                     </tr>
                     <tr>
+                        <td class="w-half">Client</td>
+                        <td class="w-half text-right">{{ $data['client_name'] }}</td>
+                    </tr>
+                    <tr>
                         <td class="w-half">Kasir</td>
                         <td class="w-half text-right">{{ $data['cashier_name'] }}</td>
                     </tr>
