@@ -111,10 +111,10 @@ class EditTransaction extends EditRecord
 
         if ($discount != null) {
             $data['discount'] = $discount->discount;
-            $data['total_discount'] = $this->record->total_discount;
+            $data['total_discount'] = $discount->discount;
             $data['discount_code_used'] = $discount->code;
             $data['total'] = $this->record->amount;
-            $data['discount_detail'] = '*Berhasil menggunakan diskon ' . $discount->name . ' dengan potongan ' . $discount->discount . '';
+            $data['discount_detail'] = '*Berhasil menggunakan diskon ' . $discount->name . ' dengan potongan ' . $discount->discount . ' rupiah';
         }
 
         if ($data['payment_method'] == PaymentMethod::WAITING_FOR_PAYMENT) {
@@ -137,13 +137,14 @@ class EditTransaction extends EditRecord
             $ended_at = Carbon::parse($discount->ended_at);
 
             if (Carbon::now()->between($started_at, $ended_at) && $discount->is_active == 1) {
-                $set('discount', $discount->discount);
-                $set('total_discount', $discount->discount);
+                $totalDiscount = ($discount->discount / 100) * $get('total_raw');
+                $set('discount', $totalDiscount);
+                $set('total_discount', $totalDiscount);
                 $set('discount_code', '');
                 $set('discount_code_used', $code);
-                $set('discount_detail', '*Berhasil menggunakan diskon ' . $discount->name . ' dengan potongan ' . $discount->discount . '');
+                $set('discount_detail', '*Berhasil menggunakan diskon ' . $discount->name . ' dengan potongan ' . $discount->discount . '%');
 
-                $set('total', $get('total_raw') - $discount->discount);
+                $set('total', $get('total_raw') - $totalDiscount);
 
                 Notification::make()
                     ->title('Diskon ditemukan')
@@ -151,7 +152,7 @@ class EditTransaction extends EditRecord
                     ->body(function () use ($discount) {
                         return new HtmlString('
                         <div>
-                            <p>Berhasil menggunakan diskon ' . $discount->name . ' dengan potongan ' . $discount->discount . '</p>
+                            <p>Berhasil menggunakan diskon ' . $discount->name . ' dengan potongan ' . $discount->discount . '%</p>
                         </div>
                     ');
                     })
@@ -465,15 +466,17 @@ class EditTransaction extends EditRecord
 
                                         if ($get('discount') != null) {
                                             $discount = Discount::where('code', $get('discount_code_used'))->first();
+                                            $totalDiscount = ($discount->discount / 100) * $record->amount;
+
                                             TransactionDiscount::create([
                                                 'transaction_id' => $record->id,
                                                 'discount_id' => $discount->id,
-                                                'name' => $discount->name,
-                                                'discount' => $discount->discount,
+                                                'name' => $discount->name . " - " . $discount->discount . "%",
+                                                'discount' => $totalDiscount,
                                                 'code' => $discount->code,
                                             ]);
 
-                                            $dataTransaction['amount'] = $record->amount - $discount->discount;
+                                            $dataTransaction['amount'] = $record->amount - $totalDiscount;
                                         }
                                         Transaction::where('id', $record->id)->update($dataTransaction);
 
@@ -551,6 +554,7 @@ class EditTransaction extends EditRecord
 
                                     if ($this->record->discount != null) {
                                         $data['discount_name'] = $this->record->discount->name;
+
                                         $data['discount_price'] = $this->record->discount->discount;
                                     }
 

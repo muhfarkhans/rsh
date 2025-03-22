@@ -53,7 +53,6 @@ class DiscountResource extends Resource
                     ->sortable(),
                 TextColumn::make('discount')
                     ->label('Diskon')
-                    ->formatStateUsing(fn(string $state): string => __(Helper::rupiah($state)))
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('is_active')
@@ -120,10 +119,11 @@ class DiscountResource extends Resource
                 ->columnSpan(1),
             TextInput::make('discount')
                 ->label('Harga diskon')
-                ->hint('Isi harga layanan')
+                ->hint('Isi persentase')
+                ->maxValue(100)
+                ->suffix("%")
                 ->required()
                 ->numeric()
-                ->prefix('Rp. ')
                 ->columnSpan(1),
             DatePicker::make('started_at')
                 ->label('Periode Mulai')
