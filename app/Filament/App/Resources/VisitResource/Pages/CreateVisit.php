@@ -109,7 +109,7 @@ class CreateVisit extends CreateRecord
                     'name' => null,
                     'type' => null,
                 ],
-                'diagnose' => "Belum di diagnosa",
+                'diagnose' => "-",
                 'status' => VisitStatus::WAITING_FOR_CHECK,
             ];
             $createdClientVisit = ClientVisit::create($dataClientVisit);

@@ -15,10 +15,6 @@ return new class extends Migration {
             $table->unsignedBigInteger('client_visit_id');
             $table->unsignedBigInteger('therapy_id');
             $table->string('cupping_type');
-            $table->integer('temperature');
-            $table->string('blood_pressure');
-            $table->integer('pulse');
-            $table->integer('respiratory');
             $table->text('side_effect');
             $table->text('first_action');
             $table->text('education_after');

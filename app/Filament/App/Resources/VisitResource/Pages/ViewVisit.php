@@ -146,7 +146,7 @@ class ViewVisit extends ViewRecord
                                                 return VisitResource::getUrl('edit-service', ['record' => $record]);
                                             })
                                             ->label(function (ClientVisit $record) {
-                                                if ($record->clientVisitCupping != null) {
+                                                if ($record->clientVisitCupping->temperature != null) {
                                                     return 'Edit dan Lihat Layanan';
                                                 } else {
                                                     return 'Lakukan Pengkajian';

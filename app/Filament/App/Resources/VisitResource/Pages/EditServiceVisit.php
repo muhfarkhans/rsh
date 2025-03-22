@@ -18,6 +18,8 @@ use App\Models\Transaction;
 use App\Models\TransactionItem;
 use App\Models\User;
 use Filament\Actions;
+use Filament\Forms\Components\CheckboxList;
+use Filament\Forms\Components\TimePicker;
 use Filament\Resources\Pages\EditRecord;
 use Filament\Forms\Form;
 use Filament\Forms\Components\Grid;
@@ -127,6 +129,8 @@ class EditServiceVisit extends EditRecord
             $data['checks_other'] = $this->record->clientVisitCheck->other[0];
         }
 
+        // dd($this->record);
+
         return $data;
     }
 
@@ -145,10 +149,6 @@ class EditServiceVisit extends EditRecord
                 'client_visit_id' => $record->id,
                 'therapy_id' => $record->therapy_id,
                 'service_id' => $data['service_id'],
-                'temperature' => $data['temperature'],
-                'blood_pressure' => $data['sistolik'] / $data['diastolik'],
-                'pulse' => $data['pulse'],
-                'respiratory' => $data['respiratory'],
                 'side_effect' => $data['side_effect'],
                 'first_action' => $data['first_action'],
                 'education_after' => $data['education_after'],
@@ -168,7 +168,7 @@ class EditServiceVisit extends EditRecord
             }
 
             $cuppingExists = ClientVisitCupping::where('client_visit_id', $record->id)->first();
-            if ($cuppingExists) {
+            if ($cuppingExists != null) {
                 $editCupping = ClientVisitCupping::where('client_visit_id', $record->id)->update($dataCupping);
             } else {
                 $editCupping = ClientVisitCupping::create($dataCupping);
@@ -187,7 +187,7 @@ class EditServiceVisit extends EditRecord
                 ],
             ];
             $checkExists = ClientVisitCheck::where('client_visit_id', $record->id)->first();
-            if ($cuppingExists) {
+            if ($checkExists != null) {
                 ClientVisitCheck::where('client_visit_id', $record->id)->update($dataClientCheck);
             } else {
                 ClientVisitCheck::create($dataClientCheck);
@@ -208,11 +208,11 @@ class EditServiceVisit extends EditRecord
             $additionalCuppingPointPrice = $this->setting->additional_cupping_price * $additionalCupingPoint;
             $amount = $service->price + $additionalCuppingPointPrice;
 
-            $dataClientVisit = [
-                'signature_therapist' => $signatureTherapistFilename,
-                'signature_client' => $signatureClientFilename,
-                'relation_as' => $data['client_relation_as'],
-            ];
+            // $dataClientVisit = [
+            //     'signature_therapist' => $signatureTherapistFilename,
+            //     'signature_client' => $signatureClientFilename,
+            //     'relation_as' => $data['client_relation_as'],
+            // ];
             $dataTransaction = [
                 'client_visit_id' => $record->id,
                 'created_by' => Auth::user()->id,
@@ -251,7 +251,39 @@ class EditServiceVisit extends EditRecord
                 TransactionItem::create($dataAdditionalTransactionItem);
             }
 
-            $dataClientVisit['status'] = VisitStatus::WAITING_FOR_SERVICE;
+            $dataClientVisit = [
+                'therapy_id' => $data['therapy_id'],
+                'complaint' => $data['complaint'],
+                'medical_history' => $data['medical_history'],
+                'family_medical_history' => json_encode($data['family_medical_history']),
+                'medication_history' => json_encode($data['medication_history']),
+                'sleep_habits' => [
+                    'start' => $data['sleep_habits_start'],
+                    'end' => $data['sleep_habits_end'],
+                ],
+                'exercise' => [
+                    'name' => $data['exercise_name'],
+                    'intensity' => $data['exercise_intensity'],
+                    'time' => $data['exercise_time'],
+                ],
+                'nutrition' => [
+                    'name' => $data['nutrition_name'],
+                    'portion' => $data['nutrition_portion'],
+                    'time' => $data['nutrition_time'],
+                    'type' => $data['nutrition_type'],
+                ],
+                'spiritual' => [
+                    'name' => $data['spiritual_name'],
+                    'type' => $data['spiritual_type'],
+                ],
+                'diagnose' => $data['diagnose'],
+                'status' => VisitStatus::WAITING_FOR_SERVICE,
+                'signature_therapist' => $signatureTherapistFilename,
+                'signature_client' => $signatureClientFilename,
+                'relation_as' => $data['client_relation_as'],
+            ];
+
+            // $dataClientVisit['status'] = VisitStatus::WAITING_FOR_SERVICE;
 
             if (in_array(Role::SUPER_ADMIN, Auth::user()->getRoleNames()->toArray())) {
                 $dataClientVisit['therapy_id'] = $data['therapy_id'];
@@ -593,6 +625,104 @@ class EditServiceVisit extends EditRecord
                         })
                     ])->columnSpan(1)
                 ])->columnSpan(1),
+                Section::make('Riwayat Penyakit')
+                    ->schema([
+                        Textarea::make('complaint')
+                            ->label('Keluhan yang dirasakan')
+                            ->required()
+                            ->columnSpan(2),
+                        CheckboxList::make('medical_history')
+                            ->label('Riwayat medis')
+                            ->options([
+                                'Diabetes Melitus' => 'Diabetes Melitus',
+                                'Penyakit Jantung dan Penggunaan Alat Pacu Jantung' => 'Penyakit Jantung dan Penggunaan Alat Pacu Jantung',
+                                'Kanker' => 'Kanker',
+                                'Penyakit Darah' => 'Penyakit Darah',
+                                'Gagal Organ' => 'Gagal Organ',
+                                'Hepatitis' => 'Hepatitis',
+                                'HIV/AIDS' => 'HIV/AIDS',
+                                'Fraktur/Pembedahan' => 'Fraktur/Pembedahan',
+                                'Lainnya' => 'Lainnya',
+                            ])
+                            ->columns(3)
+                            ->columnSpan(2),
+                        Textarea::make('family_medical_history')
+                            ->label('Riwayat penyakit keluarga')
+                            ->columnSpan(2),
+                        Textarea::make('medication_history')
+                            ->label('Riwayat pengobatan')
+                            ->columnSpan(2),
+                        TimePicker::make('sleep_habits_start')
+                            ->label('Waktu tidur')
+                            ->hint('Gunakan format 24:00')
+                            ->seconds(false)
+                            ->columnSpan(1),
+                        TimePicker::make('sleep_habits_end')
+                            ->label('Waktu bangun')
+                            ->hint('Gunakan format 24:00')
+                            ->seconds(false)
+                            ->columnSpan(1),
+                        Grid::make()->columns(3)->schema([
+                            TextInput::make('exercise_name')
+                                ->label('Jenis olahraga'),
+                            Select::make('exercise_intensity')
+                                ->label('Intensitas olahraga')
+                                ->options([
+                                    'Ringan' => 'Ringan',
+                                    'Sedang' => 'Sedang',
+                                    'Berat' => 'Berat',
+                                ]),
+                            Select::make('exercise_time')
+                                ->label('Waktu olahraga')
+                                ->options([
+                                    'Pagi' => 'Pagi',
+                                    'Siang' => 'Siang',
+                                    'Malam' => 'Malam',
+                                ]),
+                        ]),
+                        Grid::make()->columns(2)->schema([
+                            TextInput::make('nutrition_name')
+                                ->label('Jenis makanan'),
+                            Select::make('nutrition_portion')
+                                ->label('Porsi makan')
+                                ->options([
+                                    'Sedikit' => 'Sedikit',
+                                    'Sedang' => 'Sedang',
+                                    'Banyak' => 'Banyak',
+                                ]),
+                            Select::make('nutrition_time')
+                                ->label('Waktu makan')
+                                ->options([
+                                    'Pagi' => 'Pagi',
+                                    'Siang' => 'Siang',
+                                    'Malam' => 'Malam',
+                                ]),
+                            CheckboxList::make('nutrition_type')
+                                ->label('Golongan makanan')
+                                ->options([
+                                    'Halal' => 'Halal',
+                                    'Thoyyib' => 'Thoyyib',
+                                    'Alami' => 'Alami',
+                                ])
+                                ->columns(3),
+                        ]),
+                        Grid::make()->columns(2)->schema([
+                            MarkdownEditor::make('spiritual_name')
+                                ->label('Ibadah wajib'),
+                            CheckboxList::make('spiritual_type')
+                                ->label('Jenis Ibadah')
+                                ->options([
+                                    'Sholat 5 waktu' => 'Sholat 5 waktu',
+                                    'Membaca Alquran' => 'Membaca Alquran',
+                                    'Shalat sunah' => 'Shalat sunah',
+                                    'Puasa sunah' => 'Puasa sunah',
+                                ]),
+                        ]),
+                        Textarea::make('diagnose')
+                            ->label('Diagnosa')
+                            ->required()
+                            ->columnSpan(2),
+                    ])->columns(2),
                 Section::make()->schema([
                     Grid::make()->columns(1)->schema([
                         Textarea::make('side_effect')
