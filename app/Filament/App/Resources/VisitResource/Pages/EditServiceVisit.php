@@ -842,10 +842,12 @@ class EditServiceVisit extends EditRecord
                             })->columnSpanFull(),
                         SignaturePad::make('signature_therapist')
                             ->label('TTE Terapis')
+                            ->penColor('black')
                             ->required()
                             ->columns(1),
                         SignaturePad::make('signature_client')
                             ->label('TTE Pasien')
+                            ->penColor('black')
                             ->required()
                             ->columns(1),
                         Placeholder::make('toc-notes')

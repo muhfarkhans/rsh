@@ -257,7 +257,13 @@
                     </tr>
                     <tr>
                         <td class="w-1/4">Lainnya</td>
-                        <td class="w-3/4">: {{ $data['visit_check_other'] }} cm</td>
+                        <td class="w-3/4">:
+                            @if(isset($data['visit_check_other'][0]))
+                                {{ $data['visit_check_other'][0] }} cm
+                            @else
+                                -
+                            @endif
+                        </td>
                     </tr>
                 </table>
             </div>
