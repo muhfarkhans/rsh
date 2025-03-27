@@ -136,6 +136,7 @@ class EditServiceVisit extends EditRecord
 
     protected function handleRecordUpdate(\Illuminate\Database\Eloquent\Model $record, array $data): \Illuminate\Database\Eloquent\Model
     {
+
         $signatureTherapist = Helper::sanitizeBase64Image($data['signature_therapist']);
         $signatureTherapistFilename = Str::uuid() . '.png';
         Storage::disk('local')->put($signatureTherapistFilename, base64_decode($signatureTherapist));
@@ -145,9 +146,15 @@ class EditServiceVisit extends EditRecord
         Storage::disk('local')->put($signatureClientFilename, base64_decode($signatureClient));
 
         return DB::transaction(function () use ($data, $record, $signatureTherapistFilename, $signatureClientFilename) {
+            if (in_array(Role::SUPER_ADMIN, Auth::user()->getRoleNames()->toArray())) {
+                $therapyId = $data['therapy_id'];
+            } else {
+                $therapyId = $record->therapy_id;
+            }
+
             $dataCupping = [
                 'client_visit_id' => $record->id,
-                'therapy_id' => $record->therapy_id,
+                'therapy_id' => $therapyId,
                 'service_id' => $data['service_id'],
                 'side_effect' => $data['side_effect'],
                 'first_action' => $data['first_action'],
@@ -160,11 +167,11 @@ class EditServiceVisit extends EditRecord
             ];
 
             if (isset($data['therapy_id'])) {
-                $dataCupping['therapy_id'] = $data['therapy_id'];
+                $dataCupping['therapy_id'] = $therapyId;
             }
 
             if (in_array(Role::SUPER_ADMIN, Auth::user()->getRoleNames()->toArray())) {
-                $dataCupping['therapy_id'] = $data['therapy_id'];
+                $dataCupping['therapy_id'] = $therapyId;
             }
 
             $cuppingExists = ClientVisitCupping::where('client_visit_id', $record->id)->first();
@@ -252,7 +259,7 @@ class EditServiceVisit extends EditRecord
             }
 
             $dataClientVisit = [
-                'therapy_id' => $data['therapy_id'],
+                'therapy_id' => $therapyId,
                 'complaint' => $data['complaint'],
                 'medical_history' => $data['medical_history'],
                 'family_medical_history' => json_encode($data['family_medical_history']),
@@ -286,7 +293,7 @@ class EditServiceVisit extends EditRecord
             // $dataClientVisit['status'] = VisitStatus::WAITING_FOR_SERVICE;
 
             if (in_array(Role::SUPER_ADMIN, Auth::user()->getRoleNames()->toArray())) {
-                $dataClientVisit['therapy_id'] = $data['therapy_id'];
+                $dataClientVisit['therapy_id'] = $therapyId;
             }
 
             ClientVisit::where('id', $record->id)->update($dataClientVisit);
