@@ -316,14 +316,14 @@ class ViewVisit extends ViewRecord
                                                     'visit_nutrition_time' => $this->record->nutrition['time'],
                                                     'visit_nutrition_type' => is_array($this->record->nutrition['type']) ? $this->record->nutrition['type'] : [],
                                                     'visit_spiritual_name' => $this->record->spiritual['name'],
-                                                    'visit_spiritual_type' => is_array($this->record->nutrition['type']) ? $this->record->nutrition['type'] : [],
+                                                    'visit_spiritual_type' => is_array($this->record->spiritual['type']) ? $this->record->spiritual['type'] : [],
                                                     'visit_check_temperature' => $this->record->clientVisitCheck->temperature ?? 0,
                                                     'visit_check_blood_pressure' => $this->record->clientVisitCheck->blood_pressure ?? 0,
                                                     'visit_check_pulse' => $this->record->clientVisitCheck->pulse ?? 0,
                                                     'visit_check_respiratory' => $this->record->clientVisitCheck->respiratory ?? 0,
                                                     'visit_check_weight' => $this->record->clientVisitCheck->weight ?? 0 . " Kg",
                                                     'visit_check_height' => $this->record->clientVisitCheck->height ?? 0 . " cm",
-                                                    'visit_check_other' => $this->record->clientVisitCheck->check_other ?? "",
+                                                    'visit_check_other' => $this->record->clientVisitCheck->other ?? "",
                                                     'visit_diagnose' => $this->record->diagnose,
                                                     'service_name' => $this->record->clientVisitCupping->service->name,
                                                     'service_price' => $this->record->clientVisitCupping->service->price,
@@ -571,9 +571,9 @@ class ViewVisit extends ViewRecord
                                         'md' => 1,
                                         'lg' => 1
                                     ]),
-                                TextEntry::make('check_other')
+                                TextEntry::make('other')
                                     ->label('Pemeriksaan lainnya')
-                                    ->getStateUsing(fn($record) => ($record->clientVisitCheck ? $record->clientVisitCheck->check_other : 0))
+                                    ->getStateUsing(fn($record) => ($record->clientVisitCheck ? $record->clientVisitCheck->other : 0))
                                     ->extraAttributes(FilamentHelper::textEntryExtraAttributes())
                                     ->default("-")
                                     ->columnSpan([

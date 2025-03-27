@@ -129,7 +129,28 @@ class EditServiceVisit extends EditRecord
             $data['checks_other'] = $this->record->clientVisitCheck->other[0];
         }
 
-        // dd($this->record);
+        $data['medical_history'] = $this->record->medical_history;
+        $data['family_medical_history'] = $this->record->family_medical_history;
+        $data['medication_history'] = $this->record->medication_history;
+        $data['sleep_habits_start'] = $this->record->sleep_habits['start'];
+        $data['sleep_habits_end'] = $this->record->sleep_habits['end'];
+        $data['exercise_name'] = $this->record->exercise['name'];
+        $data['exercise_intensity'] = $this->record->exercise['intensity'];
+        $data['exercise_time'] = $this->record->exercise['time'];
+        $data['nutrition_name'] = $this->record->nutrition['name'];
+        $data['nutrition_portion'] = $this->record->nutrition['portion'];
+        $data['nutrition_time'] = $this->record->nutrition['time'];
+        $data['nutrition_type'] = $this->record->nutrition['type'];
+        $data['spiritual_name'] = $this->record->spiritual['name'];
+        $data['spiritual_type'] = $this->record->spiritual['type'];
+        $data['check_temperature'] = $this->record->clientVisitCheck->temperature ?? 0;
+        $data['check_blood_pressure'] = $this->record->clientVisitCheck->blood_pressure ?? 0;
+        $data['check_pulse'] = $this->record->clientVisitCheck->pulse ?? 0;
+        $data['check_respiratory'] = $this->record->clientVisitCheck->respiratory ?? 0;
+        $data['check_weight'] = $this->record->clientVisitCheck->weight ?? 0 . " Kg";
+        $data['check_height'] = $this->record->clientVisitCheck->height ?? 0 . " cm";
+        $data['check_other'] = $this->record->clientVisitCheck->check_other ?? "";
+        $data['diagnose'] = $this->record->diagnose;
 
         return $data;
     }
