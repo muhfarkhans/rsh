@@ -296,7 +296,7 @@ class ViewVisit extends ViewRecord
                                                 $data = [
                                                     'client_reg_id' => $this->record->client->reg_id,
                                                     'transaction_invoice_id' => $this->record->transactions->last()->invoice_id,
-                                                    'client_name' => $this->record->client->reg_id,
+                                                    'client_name' => $this->record->client->name,
                                                     'client_phone' => $this->record->client->phone,
                                                     'client_gender' => $this->record->client->gender,
                                                     'client_year' => $this->record->client->birthdate,
