@@ -1,6 +1,7 @@
 <?php
 
 use App\Helpers\Helper;
+use App\Http\Controllers\ExportController;
 use App\Http\Controllers\HomeController;
 use App\Models\ClientVisit;
 use Illuminate\Support\Facades\Route;
@@ -12,6 +13,8 @@ Route::get('/', function () {
 Route::get('/pdf', function () {
     return view('pdf');
 });
+
+Route::post('/pdf/detail', [ExportController::class, 'detailPdf'])->name('pdf.detail');
 
 Route::get('/detail', function () {
     $data = [

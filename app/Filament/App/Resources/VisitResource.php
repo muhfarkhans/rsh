@@ -171,6 +171,7 @@ class VisitResource extends Resource
             'edit' => Pages\EditVisit::route('/{record}/edit'),
             'edit-service' => Pages\EditServiceVisit::route('/{record}/edit-service'),
             'view' => Pages\ViewVisit::route('/{record}'),
+            'preview' => Pages\PreviewVisit::route('/{record}/preview'),
         ];
     }
 }

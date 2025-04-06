@@ -27,9 +27,15 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        FilamentView::registerRenderHook(
+            'panels::head.start',
+            fn(): string => '<meta name="csrf-token" content="' . csrf_token() . '" />',
+        );
+
         FilamentAsset::register([
-            Css::make('stylesheet', 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'),
-            Js::make('script', 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'),
+            Css::make('stylesheet', asset('leaflet.css')),
+            Js::make('script', asset('leaflet.js')),
+            Js::make('script', asset('html2canvas.min.js')),
         ]);
 
         FilamentView::registerRenderHook(

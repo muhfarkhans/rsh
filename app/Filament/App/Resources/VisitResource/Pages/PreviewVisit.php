@@ -10,42 +10,24 @@ use App\Helpers\FilamentHelper;
 use App\Helpers\Helper;
 use App\Jobs\EmailNewVisitJob;
 use App\Models\ClientVisit;
-use App\Models\Client;
 use App\Models\User;
 use Auth;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
-use Filament\Forms;
-use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Form;
-use Filament\Resources\Resource;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Notifications\Notification;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\TimePicker;
 use Filament\Infolists\Components\Actions\Action;
 use Filament\Infolists\Components\Grid;
 use Filament\Infolists\Components\Section;
-use Filament\Infolists\Components\Split;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Infolist;
 use Filament\Support\Enums\FontWeight;
 use Filament\Support\Enums\IconPosition;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Filament\Widgets\Modal;
-use Illuminate\Contracts\View\View;
 
-class ViewVisit extends ViewRecord
+class PreviewVisit extends ViewRecord
 {
     protected static string $resource = VisitResource::class;
-
-    protected static string $view = 'filament.app.resources.visit-resource.pages.view-visit';
 
     public function infolist(Infolist $infolist): Infolist
     {
@@ -53,7 +35,7 @@ class ViewVisit extends ViewRecord
             ->schema([
                 Grid::make()->columns(3)->schema(
                     [
-                        Section::make('Client data  nanana')
+                        Section::make('Client data')
                             ->headerActions([
                                 Action::make('edit')
                                     ->label('Edit')
@@ -164,7 +146,9 @@ class ViewVisit extends ViewRecord
                                             })
                                             ->color('success')
                                             ->icon('heroicon-m-map-pin')
-                                            ->iconPosition(IconPosition::After),
+                                            ->iconPosition(IconPosition::After)
+                                    ])->fullWidth(),
+                                    \Filament\Infolists\Components\Actions::make([
                                         Action::make('startservice')
                                             ->label('Mulai Layanan')
                                             ->color('info')
@@ -216,6 +200,8 @@ class ViewVisit extends ViewRecord
 
                                                 $this->record->refresh();
                                             }),
+                                    ])->fullWidth(),
+                                    \Filament\Infolists\Components\Actions::make([
                                         Action::make('finishservice')
                                             ->label('Selesaikan Layanan')
                                             ->color('danger')
@@ -267,6 +253,8 @@ class ViewVisit extends ViewRecord
 
                                                 $this->record->refresh();
                                             }),
+                                    ])->fullWidth(),
+                                    \Filament\Infolists\Components\Actions::make([
                                         Action::make('viewcuppingpoint')
                                             ->url(function (ClientVisit $record) {
                                                 if ($record->clientVisitCupping) {
@@ -285,11 +273,12 @@ class ViewVisit extends ViewRecord
                                                 }
 
                                                 return $record->clientVisitCupping->service->is_cupping !== 0;
-                                            }),
+                                            })
+                                    ])->fullWidth(),
+                                    \Filament\Infolists\Components\Actions::make([
                                         Action::make('generatepdf')
                                             ->action(function () {
                                                 $data = [
-                                                    'id' => $this->record->id,
                                                     'client_reg_id' => $this->record->client->reg_id,
                                                     'transaction_invoice_id' => $this->record->transactions->last()->invoice_id,
                                                     'client_name' => $this->record->client->name,
@@ -335,8 +324,6 @@ class ViewVisit extends ViewRecord
                                                 }, 'Detail-' . '.pdf');
                                             })
                                             ->visible(function () {
-                                                return false;
-
                                                 if (count($this->record->transactions) > 0) {
                                                     return true;
                                                 } else {
@@ -347,7 +334,7 @@ class ViewVisit extends ViewRecord
                                             ->color('info')
                                             ->icon('heroicon-m-document-arrow-down')
                                             ->iconPosition(IconPosition::After),
-                                    ])->fullWidth()->columns(),
+                                    ])->fullWidth(),
                                 ])
                                 ->columnSpan(1),
                             Section::make('Detail Invoice')
