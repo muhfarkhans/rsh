@@ -14,7 +14,7 @@ class PresentInfoWidget extends BaseWidget
         $clockIn = Presence::where('user_id', Auth::user()->id)->whereDate('created_at', now())->first();
         return [
             Stat::make(
-                'Anda telah clock in pada pukul',
+                'Anda telah login pada pukul',
                 $clockIn->created_at->format('d-m-Y H:s')
             ),
         ];

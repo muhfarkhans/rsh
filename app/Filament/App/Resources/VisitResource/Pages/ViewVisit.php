@@ -53,7 +53,7 @@ class ViewVisit extends ViewRecord
             ->schema([
                 Grid::make()->columns(3)->schema(
                     [
-                        Section::make('Client data  nanana')
+                        Section::make('Client data')
                             ->headerActions([
                                 Action::make('edit')
                                     ->label('Edit')
