@@ -20,7 +20,7 @@ class PayrollExporter extends Exporter
                 ->label('Total Presence')
                 ->state(function ($record) {
                     $totalPresence = 0;
-                    if ($record->total_service == 0 || true) {
+                    if ($record->total_service >= 1) {
                         $totalPresence = $record->total_presence;
                     } else {
                         $totalPresence = $record->total_presence / $record->total_service;
@@ -32,7 +32,7 @@ class PayrollExporter extends Exporter
                 ->label('Attendance allowance')
                 ->state(function ($record) {
                     $totalPresence = 0;
-                    if ($record->total_service == 0 || true) {
+                    if ($record->total_service >= 1) {
                         $totalPresence = $record->total_presence;
                     } else {
                         $totalPresence = $record->total_presence / $record->total_service;
@@ -44,7 +44,7 @@ class PayrollExporter extends Exporter
                 ->label('Meal allowance')
                 ->state(function ($record) {
                     $totalPresence = 0;
-                    if ($record->total_service == 0 || true) {
+                    if ($record->total_service >= 1) {
                         $totalPresence = $record->total_presence;
                     } else {
                         $totalPresence = $record->total_presence / $record->total_service;
@@ -56,7 +56,7 @@ class PayrollExporter extends Exporter
                 ->label('Total')
                 ->state(function ($record) {
                     $totalPresence = 0;
-                    if ($record->total_service == 0 || true) {
+                    if ($record->total_service >= 1) {
                         $totalPresence = $record->total_presence;
                     } else {
                         $totalPresence = $record->total_presence / $record->total_service;

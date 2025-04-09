@@ -15,6 +15,7 @@ Route::get('/pdf', function () {
 });
 
 Route::post('/pdf/detail', [ExportController::class, 'detailPdf'])->name('pdf.detail');
+Route::get('/excel/payroll', [ExportController::class, 'exportPayroll'])->name('excel.payroll');
 
 Route::get('/detail', function () {
     $data = [

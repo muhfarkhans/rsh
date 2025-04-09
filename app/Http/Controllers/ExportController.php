@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\PayrollExport;
 use App\Helpers\Helper;
 use App\Models\ClientVisit;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Maatwebsite\Excel\Excel;
 
 class ExportController extends Controller
 {
@@ -69,5 +71,17 @@ class ExportController extends Controller
         return response()->streamDownload(function () use ($pdf) {
             echo $pdf->stream();
         }, 'detail.pdf');
+    }
+
+    public function exportPayroll(Request $request)
+    {
+        $createdFrom = $request->get('created_from');
+        $createdUntil = $request->get('created_until');
+        $search = $request->get('search');
+
+        $filename = 'payroll-' . $createdFrom . '-' . $createdUntil . '.xlsx';
+
+        return (new PayrollExport($createdFrom, $createdUntil, $search))
+            ->download($filename);
     }
 }
