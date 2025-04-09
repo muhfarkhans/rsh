@@ -7,6 +7,7 @@ use App\Filament\App\Pages\Dashboard;
 use App\Filament\App\Pages\Login;
 use App\Filament\Resources\TransactionResource;
 use App\Livewire\LatestVisitors;
+use App\Livewire\PresentInfoWidget;
 use App\Livewire\StatsVisitor;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -49,6 +50,7 @@ class AppPanelProvider extends PanelProvider
             ->login(Login::class)
             ->widgets([
                 StatsVisitor::class,
+                PresentInfoWidget::class,
                 // LatestVisitors::class,
             ])
             ->topNavigation()

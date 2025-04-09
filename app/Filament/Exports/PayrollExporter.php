@@ -9,17 +9,61 @@ use Illuminate\Database\Eloquent\Model;
 
 class PayrollExporter extends Exporter
 {
-    protected static ?string $model = User::class;
-
     public static function getColumns(): array
     {
         return [
             ExportColumn::make('name')
                 ->label('Name'),
             ExportColumn::make('commision')
-                ->label('Komisi'),
-            ExportColumn::make('total_service')
-                ->label('Total Service'),
+                ->label('Commision'),
+            ExportColumn::make('total_presence')
+                ->label('Total Presence')
+                ->state(function ($record) {
+                    $totalPresence = 0;
+                    if ($record->total_service == 0 || true) {
+                        $totalPresence = $record->total_presence;
+                    } else {
+                        $totalPresence = $record->total_presence / $record->total_service;
+                    }
+
+                    return $totalPresence;
+                }),
+            ExportColumn::make('total_presence_1')
+                ->label('Attendance allowance')
+                ->state(function ($record) {
+                    $totalPresence = 0;
+                    if ($record->total_service == 0 || true) {
+                        $totalPresence = $record->total_presence;
+                    } else {
+                        $totalPresence = $record->total_presence / $record->total_service;
+                    }
+
+                    return $totalPresence * 100000;
+                }),
+            ExportColumn::make('total_presence_2')
+                ->label('Meal allowance')
+                ->state(function ($record) {
+                    $totalPresence = 0;
+                    if ($record->total_service == 0 || true) {
+                        $totalPresence = $record->total_presence;
+                    } else {
+                        $totalPresence = $record->total_presence / $record->total_service;
+                    }
+
+                    return $totalPresence * 100000;
+                }),
+            ExportColumn::make('total')
+                ->label('Total')
+                ->state(function ($record) {
+                    $totalPresence = 0;
+                    if ($record->total_service == 0 || true) {
+                        $totalPresence = $record->total_presence;
+                    } else {
+                        $totalPresence = $record->total_presence / $record->total_service;
+                    }
+
+                    return ($totalPresence * 100000) + ($totalPresence * 100000) + $record->commision;
+                }),
         ];
     }
 

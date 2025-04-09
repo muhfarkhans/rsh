@@ -5,6 +5,7 @@ namespace App\Providers\Filament;
 use App\Filament\App\Pages\LoginAdmin;
 use App\Filament\Resources\SettingResource;
 use App\Livewire\LatestVisitors;
+use App\Livewire\PresentInfoWidget;
 use App\Livewire\StatsVisitor;
 use Filament\Http\Middleware\Authenticate;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
@@ -49,6 +50,7 @@ class AdminPanelProvider extends PanelProvider
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
                 StatsVisitor::class,
+                PresentInfoWidget::class,
                 // LatestVisitors::class,
             ])
             ->middleware([
