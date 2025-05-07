@@ -65,7 +65,8 @@ class EditServiceVisit extends EditRecord
             in_array($this->record->status, [
                 VisitStatus::REGISTER,
                 VisitStatus::WAITING_FOR_CHECK,
-                VisitStatus::WAITING_FOR_SERVICE
+                VisitStatus::WAITING_FOR_SERVICE,
+                VisitStatus::ON_SERVICE,
             ])
         ) {
             return [
@@ -197,9 +198,9 @@ class EditServiceVisit extends EditRecord
 
             $cuppingExists = ClientVisitCupping::where('client_visit_id', $record->id)->first();
             if ($cuppingExists != null) {
-                $editCupping = ClientVisitCupping::where('client_visit_id', $record->id)->update($dataCupping);
+                ClientVisitCupping::where('client_visit_id', $record->id)->update($dataCupping);
             } else {
-                $editCupping = ClientVisitCupping::create($dataCupping);
+                ClientVisitCupping::create($dataCupping);
             }
 
             $dataClientCheck = [
@@ -221,63 +222,61 @@ class EditServiceVisit extends EditRecord
                 ClientVisitCheck::create($dataClientCheck);
             }
 
-            $totalTransaction = Transaction::count();
-            $service = Service::where('id', $data['service_id'])->first();
+            // $totalTransaction = Transaction::count();
+            // $service = Service::where('id', $data['service_id'])->first();
 
-            $additionalCupingPoint = 0;
-            if (isset($data['points'])) {
-                if (is_array($data['points'])) {
-                    if (count($data['points']) > 14) {
-                        $additionalCupingPoint = count($data['points']) - 14;
-                    }
-                }
-            }
+            // $additionalCupingPoint = 0;
+            // if (isset($data['points'])) {
+            //     if (is_array($data['points'])) {
+            //         if (count($data['points']) >= 15) {
+            //             $additionalCupingPoint = count($data['points']) - 15;
+            //         }
+            //     }
+            // }
 
-            $additionalCuppingPointPrice = $this->setting->additional_cupping_price * $additionalCupingPoint;
-            $amount = $service->price + $additionalCuppingPointPrice;
+            // $additionalCuppingPointPrice = $this->setting->additional_cupping_price * $additionalCupingPoint;
+            // $amount = $service->price + $additionalCuppingPointPrice;
 
-            // $dataClientVisit = [
-            //     'signature_therapist' => $signatureTherapistFilename,
-            //     'signature_client' => $signatureClientFilename,
-            //     'relation_as' => $data['client_relation_as'],
+            // $dataTransaction = [
+            //     'client_visit_id' => $record->id,
+            //     'created_by' => Auth::user()->id,
+            //     'invoice_id' => "INV" . str_pad($totalTransaction + 1, 5, 0, STR_PAD_LEFT),
+            //     'amount' => $amount,
+            //     'total_discount' => 0,
+            //     'payment_method' => PaymentMethod::WAITING_FOR_PAYMENT,
+            //     'status' => TransactionStatus::WAITING_FOR_PAYMENT,
             // ];
-            $dataTransaction = [
-                'client_visit_id' => $record->id,
-                'created_by' => Auth::user()->id,
-                'invoice_id' => "INV" . str_pad($totalTransaction + 1, 5, 0, STR_PAD_LEFT),
-                'amount' => $amount,
-                'total_discount' => 0,
-                'payment_method' => PaymentMethod::WAITING_FOR_PAYMENT,
-                'status' => TransactionStatus::WAITING_FOR_PAYMENT,
-            ];
-            $transactionExists = Transaction::where('client_visit_id', $record->id)->get();
-            if (count($transactionExists) > 0) {
-                Transaction::where('client_visit_id', $record->id)
-                    ->update(['status' => TransactionStatus::CANCEL]);
-            }
+            // $transactionExists = Transaction::where('client_visit_id', $record->id)->get();
+            // if (count($transactionExists) > 0) {
+            //     // Transaction::where('client_visit_id', $record->id)
+            //     //     ->update(['status' => TransactionStatus::CANCEL]);
 
-            $createdTransaction = Transaction::create($dataTransaction);
-            $dataTransactionItem = [
-                'transaction_id' => $createdTransaction->id,
-                'service_id' => $service->id,
-                'name' => $service->name,
-                'qty' => 1,
-                'price' => $service->price,
-                'is_additional' => 0,
-            ];
-            TransactionItem::create($dataTransactionItem);
+            //     Transaction::where('client_visit_id', $record->id)
+            //         ->delete();
+            // }
 
-            if ($additionalCupingPoint > 0) {
-                $dataAdditionalTransactionItem = [
-                    'transaction_id' => $createdTransaction->id,
-                    'service_id' => $service->id,
-                    'name' => "Titik bekam tambahan (" . $service->name . ")",
-                    'qty' => $additionalCupingPoint,
-                    'price' => $additionalCuppingPointPrice,
-                    'is_additional' => 1,
-                ];
-                TransactionItem::create($dataAdditionalTransactionItem);
-            }
+            // $createdTransaction = Transaction::create($dataTransaction);
+            // $dataTransactionItem = [
+            //     'transaction_id' => $createdTransaction->id,
+            //     'service_id' => $service->id,
+            //     'name' => $service->name,
+            //     'qty' => 1,
+            //     'price' => $service->price,
+            //     'is_additional' => 0,
+            // ];
+            // TransactionItem::create($dataTransactionItem);
+
+            // if ($additionalCupingPoint > 0) {
+            //     $dataAdditionalTransactionItem = [
+            //         'transaction_id' => $createdTransaction->id,
+            //         'service_id' => $service->id,
+            //         'name' => "Titik bekam tambahan (" . $service->name . ")",
+            //         'qty' => $additionalCupingPoint,
+            //         'price' => $additionalCuppingPointPrice,
+            //         'is_additional' => 1,
+            //     ];
+            //     TransactionItem::create($dataAdditionalTransactionItem);
+            // }
 
             $dataClientVisit = [
                 'therapy_id' => $therapyId,
@@ -310,8 +309,6 @@ class EditServiceVisit extends EditRecord
                 'signature_client' => $signatureClientFilename,
                 'relation_as' => $data['client_relation_as'],
             ];
-
-            // $dataClientVisit['status'] = VisitStatus::WAITING_FOR_SERVICE;
 
             if (in_array(Role::SUPER_ADMIN, Auth::user()->getRoleNames()->toArray())) {
                 $dataClientVisit['therapy_id'] = $therapyId;
@@ -878,7 +875,8 @@ class EditServiceVisit extends EditRecord
                             in_array($this->record->status, [
                                 VisitStatus::REGISTER,
                                 VisitStatus::WAITING_FOR_CHECK,
-                                VisitStatus::WAITING_FOR_SERVICE
+                                VisitStatus::WAITING_FOR_SERVICE,
+                                VisitStatus::ON_SERVICE,
                             ])
                         ) {
                             return true;

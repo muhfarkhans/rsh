@@ -92,6 +92,15 @@ class StatsTransaction extends BaseWidget
             ->when($isToday, function ($query) {
                 $query->whereDate('created_at', Carbon::today());
             })
+            ->when($isMonth, function ($query) {
+                $query->whereBetween(
+                    'created_at',
+                    [
+                        Carbon::now()->startOfMonth(),
+                        Carbon::now()->endOfMonth()
+                    ]
+                );
+            })
             ->count();
     }
 

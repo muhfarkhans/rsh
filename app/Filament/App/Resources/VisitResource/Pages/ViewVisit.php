@@ -2,7 +2,9 @@
 
 namespace App\Filament\App\Resources\VisitResource\Pages;
 
+use App\Constants\PaymentMethod;
 use App\Constants\Role as ConstRole;
+use App\Constants\TransactionStatus;
 use App\Constants\VisitStatus;
 use App\Filament\App\Resources\TransactionResource;
 use App\Filament\App\Resources\VisitResource;
@@ -11,6 +13,11 @@ use App\Helpers\Helper;
 use App\Jobs\EmailNewVisitJob;
 use App\Models\ClientVisit;
 use App\Models\Client;
+use App\Models\ClientVisitCupping;
+use App\Models\Service;
+use App\Models\Setting;
+use App\Models\Transaction;
+use App\Models\TransactionItem;
 use App\Models\User;
 use Auth;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -43,6 +50,13 @@ use Illuminate\Contracts\View\View;
 
 class ViewVisit extends ViewRecord
 {
+    protected Setting $setting;
+
+    public function __construct()
+    {
+        $this->setting = Setting::where('id', 1)->first();
+    }
+
     protected static string $resource = VisitResource::class;
 
     protected static string $view = 'filament.app.resources.visit-resource.pages.view-visit';
@@ -229,6 +243,63 @@ class ViewVisit extends ViewRecord
                                             })
                                             ->action(function (ClientVisit $record, array $data) {
                                                 DB::transaction(function () use ($record, $data) {
+                                                    $totalTransaction = Transaction::count();
+                                                    $clientVisitCupping = ClientVisitCupping::where('client_visit_id', $record->id)->first();
+                                                    $service = Service::where('id', $clientVisitCupping->service_id)->first();
+
+                                                    $additionalCupingPoint = 0;
+                                                    if (isset($clientVisitCupping->points)) {
+                                                        if (is_array($clientVisitCupping->points)) {
+                                                            if (count($clientVisitCupping->points) >= 15) {
+                                                                $additionalCupingPoint = count($clientVisitCupping->points) - 15;
+                                                            }
+                                                        }
+                                                    }
+
+                                                    $additionalCuppingPointPrice = $this->setting->additional_cupping_price * $additionalCupingPoint;
+                                                    $amount = $service->price + $additionalCuppingPointPrice;
+
+                                                    $dataTransaction = [
+                                                        'client_visit_id' => $record->id,
+                                                        'created_by' => Auth::user()->id,
+                                                        'invoice_id' => "INV" . str_pad($totalTransaction + 1, 5, 0, STR_PAD_LEFT),
+                                                        'amount' => $amount,
+                                                        'total_discount' => 0,
+                                                        'payment_method' => PaymentMethod::WAITING_FOR_PAYMENT,
+                                                        'status' => TransactionStatus::WAITING_FOR_PAYMENT,
+                                                    ];
+                                                    $transactionExists = Transaction::where('client_visit_id', $record->id)->get();
+                                                    if (count($transactionExists) > 0) {
+                                                        // Transaction::where('client_visit_id', $record->id)
+                                                        //     ->update(['status' => TransactionStatus::CANCEL]);
+                                    
+                                                        Transaction::where('client_visit_id', $record->id)
+                                                            ->delete();
+                                                    }
+
+                                                    $createdTransaction = Transaction::create($dataTransaction);
+                                                    $dataTransactionItem = [
+                                                        'transaction_id' => $createdTransaction->id,
+                                                        'service_id' => $service->id,
+                                                        'name' => $service->name,
+                                                        'qty' => 1,
+                                                        'price' => $service->price,
+                                                        'is_additional' => 0,
+                                                    ];
+                                                    TransactionItem::create($dataTransactionItem);
+
+                                                    if ($additionalCupingPoint > 0) {
+                                                        $dataAdditionalTransactionItem = [
+                                                            'transaction_id' => $createdTransaction->id,
+                                                            'service_id' => $service->id,
+                                                            'name' => "Titik bekam tambahan (" . $service->name . ")",
+                                                            'qty' => $additionalCupingPoint,
+                                                            'price' => $additionalCuppingPointPrice,
+                                                            'is_additional' => 1,
+                                                        ];
+                                                        TransactionItem::create($dataAdditionalTransactionItem);
+                                                    }
+
                                                     ClientVisit::where('id', $record->id)
                                                         ->update([
                                                             'status' => VisitStatus::WAITING_FOR_PAYMENT,

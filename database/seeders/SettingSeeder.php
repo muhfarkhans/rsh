@@ -16,7 +16,7 @@ class SettingSeeder extends Seeder
         DB::table('settings')->truncate();
         DB::table('settings')->insert([
             'additional_cupping_price' => 15000,
-            'limit_cupping_point' => 14,
+            'limit_cupping_point' => 15,
             'updated_by' => 0,
             'created_at' => now(),
             'updated_at' => now(),

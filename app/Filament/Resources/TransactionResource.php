@@ -7,6 +7,7 @@ use App\Constants\TransactionStatus;
 use App\Filament\Exports\TransactionExporter;
 use App\Filament\Resources\TransactionResource\Pages;
 use App\Filament\Resources\TransactionResource\RelationManagers;
+use App\Models\Service;
 use App\Models\Transaction;
 use App\Models\User;
 use Carbon\Carbon;
@@ -53,6 +54,14 @@ class TransactionResource extends Resource
                     ->sortable(),
                 TextColumn::make('clientVisit.client.name')
                     ->label('Client')
+                    ->searchable()
+                    ->sortable(),
+                TextColumn::make('clientVisit.client.gender')
+                    ->label('Jenis Kelamin')
+                    ->searchable()
+                    ->sortable(),
+                TextColumn::make('items.name')
+                    ->label('Layanan')
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('clientVisit.therapy.name')
@@ -120,6 +129,19 @@ class TransactionResource extends Resource
                         return $indicators;
                     })
                     ->columnSpan(2)->columns(2),
+                SelectFilter::make('clientVisit.client.gender')
+                    ->label('Jenis Kelamin')
+                    ->query(function (Builder $query, array $data) {
+                        if (!empty($data['value']))
+                            $query->whereHas(
+                                'clientVisit.client',
+                                fn(Builder $query) => $query->where('gender', '=', $data['value'])
+                            );
+                    })
+                    ->options([
+                        "Perempuan" => "Perempuan",
+                        "Laki-laki" => "Laki-laki",
+                    ]),
                 SelectFilter::make('clientVisit.therapy_id')
                     ->label('Terapis')
                     ->query(function (Builder $query, array $data) {
@@ -133,8 +155,20 @@ class TransactionResource extends Resource
                         return User::with(['roles'])->whereHas('roles', function ($query) {
                             return $query->where('name', Role::THERAPIST);
                         })->get()->pluck('name', 'id');
+                    }),
+                SelectFilter::make('items.name')
+                    ->label('Layanan')
+                    ->query(function (Builder $query, array $data) {
+                        if (!empty($data['value']))
+                            $query->whereHas(
+                                'items',
+                                fn(Builder $query) => $query->where('name', '=', $data['value'])
+                            );
                     })
-            ], layout: FiltersLayout::AboveContent)->filtersFormColumns(2)
+                    ->options(function () {
+                        return Service::get()->pluck('name', 'name');
+                    })
+            ], layout: FiltersLayout::AboveContent)->filtersFormColumns(5)
             ->actions([
                 Tables\Actions\EditAction::make(),
                 ViewAction::make()

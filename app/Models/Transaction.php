@@ -48,6 +48,11 @@ class Transaction extends Model
         return $this->belongsTo(TransactionDiscount::class, 'id', 'transaction_id');
     }
 
+    public function service()
+    {
+        return $this->belongsTo(TransactionItem::class, 'id', 'transaction_id');
+    }
+
     public function items()
     {
         return $this->hasMany(TransactionItem::class, 'transaction_id');

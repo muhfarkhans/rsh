@@ -59,7 +59,7 @@
             },
 
             addMarker(latlng) {
-                if (this.markers.length >= 14) {
+                if (this.markers.length >= 15) {
                     alert('Menambahkan titik bekam tambahan');
                     // return
                 }
