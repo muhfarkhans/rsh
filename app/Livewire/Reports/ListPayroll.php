@@ -9,6 +9,7 @@ use App\Filament\Resources\TransactionResource;
 use App\Helpers\Helper;
 use App\Models\ClientVisit;
 use App\Models\Presence;
+use App\Models\Setting;
 use App\Models\Transaction;
 use App\Models\User;
 use Carbon\Carbon;
@@ -51,6 +52,7 @@ class ListPayroll extends Component implements HasForms, HasTable
 
     public static function table(Table $table): Table
     {
+        $setting = Setting::where('id', 1)->first();
         $now = Carbon::now();
         $startDate = $now->startOfMonth()->format('Y-m-d');
         $endDate = $now->endOfMonth()->format('Y-m-d');
@@ -101,21 +103,21 @@ class ListPayroll extends Component implements HasForms, HasTable
                     ])
                     ->addSelect([
                         'attendance_allowance' => Presence::query()
-                            ->selectRaw('count(presences.id) * 100000')
+                            ->selectRaw('count(presences.id) * ' . $setting->attendance)
                             ->whereColumn('presences.user_id', 'users.id')
                             ->whereDate('presences.created_at', '>=', $createdFrom)
                             ->whereDate('presences.created_at', '<=', $createdUntil)
                     ])
                     ->addSelect([
                         'meal_allowance' => Presence::query()
-                            ->selectRaw('count(presences.id) * 100000')
+                            ->selectRaw('count(presences.id) * ' . $setting->meal)
                             ->whereColumn('presences.user_id', 'users.id')
                             ->whereDate('presences.created_at', '>=', $createdFrom)
                             ->whereDate('presences.created_at', '<=', $createdUntil)
                     ])
                     ->addSelect([
                         'total_allowance' => Presence::query()
-                            ->selectRaw('(count(presences.id) * 200000)')
+                            ->selectRaw('(count(presences.id) * ' . ($setting->attendance + $setting->meal) . ' )')
                             ->whereColumn('presences.user_id', 'users.id')
                             ->whereDate('presences.created_at', '>=', $createdFrom)
                             ->whereDate('presences.created_at', '<=', $createdUntil)
@@ -152,17 +154,23 @@ class ListPayroll extends Component implements HasForms, HasTable
                 TextColumn::make('attendance_allowance')
                     ->label('Attendance Allowance')
                     ->formatStateUsing(function ($record) {
-                        return $record->total_presence * 100000;
+                        $setting = Setting::where('id', 1)->first();
+
+                        return $record->total_presence * $setting->attendance;
                     }),
                 TextColumn::make('meal_allowance')
                     ->label('Meal Allowance')
                     ->formatStateUsing(function ($record) {
-                        return $record->total_presence * 100000;
+                        $setting = Setting::where('id', 1)->first();
+
+                        return $record->total_presence * $setting->meal;
                     }),
                 TextColumn::make('total_allowance')
                     ->label('Total Allowance')
                     ->formatStateUsing(function ($record) {
-                        return ($record->total_presence * 200000) + $record->commision;
+                        $setting = Setting::where('id', 1)->first();
+
+                        return ($record->total_presence * ($setting->attendance + $setting->meal)) + $record->commision;
                     })
             ])
             ->filters([

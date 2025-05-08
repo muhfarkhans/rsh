@@ -56,6 +56,27 @@ class EditSetting extends EditRecord
                 ->numeric()
                 ->prefix('Rp. ')
                 ->columnSpanFull(),
+            TextInput::make('attendance')
+                ->label('Uang Kehadiran')
+                ->hint('Isi uang kehadiran')
+                ->required()
+                ->numeric()
+                ->prefix('Rp. ')
+                ->columnSpanFull(),
+            TextInput::make('meal')
+                ->label('Uang Makan')
+                ->hint('Isi uang makan')
+                ->required()
+                ->numeric()
+                ->prefix('Rp. ')
+                ->columnSpanFull(),
+            TextInput::make('commision')
+                ->label('Komisi')
+                ->hint('Isi harga komisi')
+                ->required()
+                ->numeric()
+                ->prefix('Rp. ')
+                ->columnSpanFull(),
             TextInput::make('limit_cupping_point')
                 ->visible(false)
                 ->label('Batasan titik bekam')

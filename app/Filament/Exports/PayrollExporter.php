@@ -2,6 +2,7 @@
 
 namespace App\Filament\Exports;
 
+use App\Models\Setting;
 use Filament\Actions\Exports\ExportColumn;
 use Filament\Actions\Exports\Exporter;
 use Filament\Actions\Exports\Models\Export;
@@ -31,6 +32,8 @@ class PayrollExporter extends Exporter
             ExportColumn::make('total_presence_1')
                 ->label('Attendance allowance')
                 ->state(function ($record) {
+                    $setting = Setting::where('id', 1)->first();
+
                     $totalPresence = 0;
                     if ($record->total_service >= 1) {
                         $totalPresence = $record->total_presence;
@@ -38,11 +41,13 @@ class PayrollExporter extends Exporter
                         $totalPresence = $record->total_presence / $record->total_service;
                     }
 
-                    return $totalPresence * 100000;
+                    return $totalPresence * $setting->attendance;
                 }),
             ExportColumn::make('total_presence_2')
                 ->label('Meal allowance')
                 ->state(function ($record) {
+                    $setting = Setting::where('id', 1)->first();
+
                     $totalPresence = 0;
                     if ($record->total_service >= 1) {
                         $totalPresence = $record->total_presence;
@@ -50,11 +55,14 @@ class PayrollExporter extends Exporter
                         $totalPresence = $record->total_presence / $record->total_service;
                     }
 
-                    return $totalPresence * 100000;
+                    return $totalPresence * $setting->attendance;
+                    ;
                 }),
             ExportColumn::make('total')
                 ->label('Total')
                 ->state(function ($record) {
+                    $setting = Setting::where('id', 1)->first();
+
                     $totalPresence = 0;
                     if ($record->total_service >= 1) {
                         $totalPresence = $record->total_presence;
@@ -62,7 +70,7 @@ class PayrollExporter extends Exporter
                         $totalPresence = $record->total_presence / $record->total_service;
                     }
 
-                    return ($totalPresence * 100000) + ($totalPresence * 100000) + $record->commision;
+                    return ($totalPresence * $setting->attendance) + ($totalPresence * $setting->meal) + $record->commision;
                 }),
         ];
     }

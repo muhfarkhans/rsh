@@ -16,5 +16,7 @@ class Setting extends Model
         'limit_cupping_point',
         'updated_by',
         'commision',
+        'meal',
+        'attendance',
     ];
 }

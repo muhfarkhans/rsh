@@ -4,6 +4,7 @@ namespace App\Exports;
 
 use App\Models\ClientVisit;
 use App\Models\Presence;
+use App\Models\Setting;
 use App\Models\User;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\Exportable;
@@ -31,13 +32,15 @@ class PayrollExport implements FromQuery, WithMapping, WithHeadings, WithColumnW
 
     public function map($record): array
     {
+        $setting = Setting::where('id', 1)->first();
+
         return [
             $record->name,
             $record->commision,
             $record->total_presence,
-            $record->total_presence * 100000,
-            $record->total_presence * 100000,
-            ($record->total_presence * 100000) + ($record->total_presence * 100000) + $record->commision,
+            $record->total_presence * $setting->attendance,
+            $record->total_presence * $setting->meal,
+            ($record->total_presence * $setting->attendance) + ($record->total_presence * $setting->meal) + $record->commision,
         ];
     }
 
@@ -94,7 +97,7 @@ class PayrollExport implements FromQuery, WithMapping, WithHeadings, WithColumnW
             // ])
             ->addSelect([
                 'commision' => ClientVisit::query()
-                    ->selectRaw('sum(services.commision)')
+                    ->selectRaw('sum(transaction_items.commision)')
                     ->whereColumn('client_visits.therapy_id', 'users.id')
                     ->leftJoin('transactions', function ($join) {
                         $join->on('transactions.client_visit_id', '=', 'client_visits.id')
