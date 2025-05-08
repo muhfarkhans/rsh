@@ -9,6 +9,13 @@ use Filament\Widgets\ChartWidget;
 
 class ServiceChart extends ChartWidget
 {
+    protected int|string|array $columnSpan = 'full';
+
+    protected function getColumns(): int
+    {
+        return 1;
+    }
+
     protected static ?string $heading = 'Trend Layanan bulan ini';
 
     protected function getData(): array

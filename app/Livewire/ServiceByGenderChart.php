@@ -8,6 +8,13 @@ use Filament\Widgets\ChartWidget;
 
 class ServiceByGenderChart extends ChartWidget
 {
+    protected int|string|array $columnSpan = 'full';
+
+    protected function getColumns(): int
+    {
+        return 1;
+    }
+
     protected static ?string $heading = 'Trend Layanan berdasarkan jenis kelamin client bulan ini';
 
     protected function getData(): array
