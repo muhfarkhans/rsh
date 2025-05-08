@@ -8,6 +8,7 @@ use App\Livewire\LatestVisitors;
 use App\Livewire\PresentInfoWidget;
 use App\Livewire\ServiceByGenderChart;
 use App\Livewire\ServiceChart;
+use App\Livewire\StatsService;
 use App\Livewire\StatsVisitor;
 use Filament\Http\Middleware\Authenticate;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
@@ -53,6 +54,7 @@ class AdminPanelProvider extends PanelProvider
             ->widgets([
                 StatsVisitor::class,
                 PresentInfoWidget::class,
+                StatsService::class,
                 ServiceChart::class,
                 ServiceByGenderChart::class,
                 // LatestVisitors::class,
