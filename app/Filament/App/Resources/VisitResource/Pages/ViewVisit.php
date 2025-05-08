@@ -12,41 +12,26 @@ use App\Helpers\FilamentHelper;
 use App\Helpers\Helper;
 use App\Jobs\EmailNewVisitJob;
 use App\Models\ClientVisit;
-use App\Models\Client;
 use App\Models\ClientVisitCupping;
 use App\Models\Service;
 use App\Models\Setting;
 use App\Models\Transaction;
 use App\Models\TransactionItem;
 use App\Models\User;
+use App\Services\NotifyEmail;
 use Auth;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
-use Filament\Forms;
-use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Form;
-use Filament\Resources\Resource;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Notifications\Notification;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\TimePicker;
 use Filament\Infolists\Components\Actions\Action;
 use Filament\Infolists\Components\Grid;
 use Filament\Infolists\Components\Section;
-use Filament\Infolists\Components\Split;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Infolist;
 use Filament\Support\Enums\FontWeight;
 use Filament\Support\Enums\IconPosition;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Filament\Widgets\Modal;
-use Illuminate\Contracts\View\View;
 
 class ViewVisit extends ViewRecord
 {
@@ -176,9 +161,7 @@ class ViewVisit extends ViewRecord
                                                     return true;
                                                 }
                                             })
-                                            ->color('success')
-                                            ->icon('heroicon-m-map-pin')
-                                            ->iconPosition(IconPosition::After),
+                                            ->color('success'),
                                         Action::make('startservice')
                                             ->label('Mulai Layanan')
                                             ->color('info')
@@ -270,9 +253,6 @@ class ViewVisit extends ViewRecord
                                                     ];
                                                     $transactionExists = Transaction::where('client_visit_id', $record->id)->get();
                                                     if (count($transactionExists) > 0) {
-                                                        // Transaction::where('client_visit_id', $record->id)
-                                                        //     ->update(['status' => TransactionStatus::CANCEL]);
-                                    
                                                         Transaction::where('client_visit_id', $record->id)
                                                             ->delete();
                                                     }
@@ -284,6 +264,7 @@ class ViewVisit extends ViewRecord
                                                         'name' => $service->name,
                                                         'qty' => 1,
                                                         'price' => $service->price,
+                                                        'commision' => $service->commision,
                                                         'is_additional' => 0,
                                                     ];
                                                     TransactionItem::create($dataTransactionItem);
@@ -295,6 +276,7 @@ class ViewVisit extends ViewRecord
                                                             'name' => "Titik bekam tambahan (" . $service->name . ")",
                                                             'qty' => $additionalCupingPoint,
                                                             'price' => $additionalCuppingPointPrice,
+                                                            'commision' => $this->setting->commision * $additionalCupingPoint,
                                                             'is_additional' => 1,
                                                         ];
                                                         TransactionItem::create($dataAdditionalTransactionItem);
@@ -307,6 +289,9 @@ class ViewVisit extends ViewRecord
                                                         ]);
                                                 });
 
+                                                // $notifyEmail = new NotifyEmail();
+                                                // $notifyEmail->sendEmail($record);
+                                    
                                                 $emailPayload = [
                                                     'client_reg_id' => $record->client->reg_id,
                                                     'client_name' => $record->client->name,

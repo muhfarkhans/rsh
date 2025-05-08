@@ -45,7 +45,7 @@ class EditServiceVisit extends EditRecord
 
     protected Setting $setting;
 
-    protected static ?string $title = 'Edit Visit Service';
+    protected static ?string $title = 'Pengkajian';
 
     public function __construct()
     {

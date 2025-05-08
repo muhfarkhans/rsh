@@ -64,17 +64,30 @@ class ListPayroll extends Component implements HasForms, HasTable
                     // ->selectRaw('sum(services.commision) AS commision')
                     // ->selectRaw('count(client_visits.id) AS total_service')
                     ->selectRaw('count(users.email) AS total_service')
+                    // ->addSelect([
+                    //     'commision' => ClientVisit::query()
+                    //         // ->selectRaw('sum(client_visits.id)')
+                    //         ->selectRaw('sum(services.commision)')
+                    //         ->whereColumn('client_visits.therapy_id', 'users.id')
+                    //         ->leftJoin('transactions', function ($join) {
+                    //             $join->on('transactions.client_visit_id', '=', 'client_visits.id')
+                    //                 ->where('transactions.status', 'paid');
+                    //         })
+                    //         ->leftJoin('client_visit_cuppings', 'client_visit_cuppings.client_visit_id', '=', 'client_visits.id')
+                    //         ->leftJoin('services', 'services.id', '=', 'client_visit_cuppings.service_id')
+                    //         ->whereDate('client_visits.created_at', '>=', $createdFrom)
+                    //         ->whereDate('client_visits.created_at', '<=', $createdUntil)
+                    // ])
                     ->addSelect([
                         'commision' => ClientVisit::query()
                             // ->selectRaw('sum(client_visits.id)')
-                            ->selectRaw('sum(services.commision)')
+                            ->selectRaw('sum(transaction_items.commision)')
                             ->whereColumn('client_visits.therapy_id', 'users.id')
                             ->leftJoin('transactions', function ($join) {
                                 $join->on('transactions.client_visit_id', '=', 'client_visits.id')
                                     ->where('transactions.status', 'paid');
                             })
-                            ->leftJoin('client_visit_cuppings', 'client_visit_cuppings.client_visit_id', '=', 'client_visits.id')
-                            ->leftJoin('services', 'services.id', '=', 'client_visit_cuppings.service_id')
+                            ->leftJoin('transaction_items', 'transaction_items.transaction_id', '=', 'transactions.id')
                             ->whereDate('client_visits.created_at', '>=', $createdFrom)
                             ->whereDate('client_visits.created_at', '<=', $createdUntil)
                     ])

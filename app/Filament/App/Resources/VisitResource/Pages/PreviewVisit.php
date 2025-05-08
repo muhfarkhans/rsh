@@ -145,8 +145,6 @@ class PreviewVisit extends ViewRecord
                                                 }
                                             })
                                             ->color('success')
-                                            ->icon('heroicon-m-map-pin')
-                                            ->iconPosition(IconPosition::After)
                                     ])->fullWidth(),
                                     \Filament\Infolists\Components\Actions::make([
                                         Action::make('startservice')

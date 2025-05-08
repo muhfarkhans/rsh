@@ -49,6 +49,13 @@ class EditSetting extends EditRecord
                 ->numeric()
                 ->required()
                 ->columnSpanFull(),
+            TextInput::make('commision')
+                ->label('Komisi')
+                ->hint('Isi harga komisi')
+                ->required()
+                ->numeric()
+                ->prefix('Rp. ')
+                ->columnSpanFull(),
             TextInput::make('limit_cupping_point')
                 ->visible(false)
                 ->label('Batasan titik bekam')

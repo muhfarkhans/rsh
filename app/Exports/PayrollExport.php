@@ -79,6 +79,19 @@ class PayrollExport implements FromQuery, WithMapping, WithHeadings, WithColumnW
     public function query()
     {
         return User::query()->select('users.id', 'users.name')
+            // ->addSelect([
+            //     'commision' => ClientVisit::query()
+            //         ->selectRaw('sum(services.commision)')
+            //         ->whereColumn('client_visits.therapy_id', 'users.id')
+            //         ->leftJoin('transactions', function ($join) {
+            //             $join->on('transactions.client_visit_id', '=', 'client_visits.id')
+            //                 ->where('transactions.status', 'paid');
+            //         })
+            //         ->leftJoin('client_visit_cuppings', 'client_visit_cuppings.client_visit_id', '=', 'client_visits.id')
+            //         ->leftJoin('services', 'services.id', '=', 'client_visit_cuppings.service_id')
+            //         ->whereDate('client_visits.created_at', '>=', $this->createdFrom)
+            //         ->whereDate('client_visits.created_at', '<=', $this->createdUntil)
+            // ])
             ->addSelect([
                 'commision' => ClientVisit::query()
                     ->selectRaw('sum(services.commision)')
@@ -87,8 +100,7 @@ class PayrollExport implements FromQuery, WithMapping, WithHeadings, WithColumnW
                         $join->on('transactions.client_visit_id', '=', 'client_visits.id')
                             ->where('transactions.status', 'paid');
                     })
-                    ->leftJoin('client_visit_cuppings', 'client_visit_cuppings.client_visit_id', '=', 'client_visits.id')
-                    ->leftJoin('services', 'services.id', '=', 'client_visit_cuppings.service_id')
+                    ->leftJoin('transaction_items', 'transaction_items.transaction_id', '=', 'transactions.id')
                     ->whereDate('client_visits.created_at', '>=', $this->createdFrom)
                     ->whereDate('client_visits.created_at', '<=', $this->createdUntil)
             ])

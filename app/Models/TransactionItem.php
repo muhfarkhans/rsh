@@ -17,6 +17,7 @@ class TransactionItem extends Model
         'name',
         'qty',
         'price',
+        'commision',
         'is_additional',
     ];
 

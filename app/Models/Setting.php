@@ -15,5 +15,6 @@ class Setting extends Model
         'additional_cupping_price',
         'limit_cupping_point',
         'updated_by',
+        'commision',
     ];
 }
