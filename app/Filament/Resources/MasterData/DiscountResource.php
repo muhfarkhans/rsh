@@ -53,6 +53,7 @@ class DiscountResource extends Resource
                     ->sortable(),
                 TextColumn::make('discount')
                     ->label('Diskon')
+                    ->suffix(" %")
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('is_active')
