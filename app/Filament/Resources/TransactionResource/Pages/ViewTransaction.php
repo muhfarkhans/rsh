@@ -93,6 +93,101 @@ class ViewTransaction extends ViewRecord
                                     return response()->streamDownload(function () use ($pdf) {
                                         echo $pdf->stream();
                                     }, 'Struct-' . $this->record->invoice_id . '.pdf');
+                                }),
+                            Action::make('print_struck')
+                                ->label(function () {
+                                    return "Print Struk";
+                                })
+                                ->extraAttributes(function () {
+                                    $nameAdditionalService = "-";
+                                    $totalPriceAdditionalService = 0;
+                                    $nameService = "-";
+                                    $totalPriceService = 0;
+
+                                    foreach ($this->record->items as $key => $item) {
+                                        if ($item->is_additional == 0) {
+                                            $totalPriceService += $item->price;
+                                            $nameService = $item->name;
+                                        } else {
+                                            $totalPriceAdditionalService += $item->price;
+                                            $nameAdditionalService = $item->name;
+                                        }
+                                    }
+
+                                    $data = [
+                                        'invoice_id' => $this->record->invoice_id,
+                                        'client_name' => $this->record->clientVisit->client->name,
+                                        'cashier_name' => $this->record->createdBy->name,
+                                        'created_at' => $this->record->updated_at,
+                                        'service_name' => $nameService,
+                                        'amount_service' => $totalPriceService,
+                                        'amount_add_name' => $nameAdditionalService,
+                                        'amount_add' => $totalPriceAdditionalService,
+                                        'discount_name' => "",
+                                        'discount_price' => 0,
+                                        'total' => $this->record->amount,
+                                        'payment_method' => $this->record->payment_method,
+                                    ];
+
+                                    if ($this->record->discount != null) {
+                                        $data['discount_name'] = $this->record->discount->name;
+                                        $data['discount_price'] = $this->record->discount->discount;
+                                    }
+
+                                    return array_merge([
+                                        'id' => 'print-struk-btn',
+                                        'data-id' => $this->record->id,
+                                    ], collect($data)->mapWithKeys(function ($value, $key) {
+                                        return ['data-' . str_replace('_', '-', $key) => $value];
+                                    })->toArray());
+                                })
+
+                                ->action(function () {
+                                    $nameAdditionalService = "-";
+                                    $totalPriceAdditionalService = 0;
+                                    $nameService = "-";
+                                    $totalPriceService = 0;
+                                    foreach ($this->record->items as $key => $item) {
+                                        if ($item->is_additional == 0) {
+                                            $totalPriceService += $item->price;
+                                            $nameService = $item->name;
+                                        } else {
+                                            $totalPriceAdditionalService += $item->price;
+                                            $nameAdditionalService = $item->name;
+                                        }
+                                    }
+
+                                    $data = [
+                                        'invoice_id' => $this->record->invoice_id,
+                                        'client_name' => $this->record->clientVisit->client->name,
+                                        'cashier_name' => $this->record->createdBy->name,
+                                        'created_at' => $this->record->updated_at,
+                                        'service_name' => $nameService,
+                                        'amount_service' => $totalPriceService,
+                                        'amount_add_name' => $nameAdditionalService,
+                                        'amount_add' => $totalPriceAdditionalService,
+                                        'discount_name' => "",
+                                        'discount_price' => 0,
+                                        'total' => $this->record->amount,
+                                        'payment_method' => $this->record->payment_method,
+                                    ];
+
+                                    if ($this->record->discount != null) {
+                                        $data['discount_name'] = $this->record->discount->name;
+                                        $data['discount_price'] = $this->record->discount->discount;
+                                    }
+
+                                    $pdf = Pdf::loadView('pdf.struct', ['data' => $data]);
+                                    return response()->streamDownload(function () use ($pdf) {
+                                        echo $pdf->stream();
+                                    }, 'Struct-' . $this->record->invoice_id . '.pdf');
+                                })
+                                ->visible(function () {
+                                    if (in_array($this->record->status, [TransactionStatus::PAID])) {
+                                        return true;
+                                    } else {
+                                        return false;
+                                    }
                                 })
                         ])
                         ->description('Informasi client dan layanan')

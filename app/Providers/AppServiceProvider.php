@@ -36,6 +36,8 @@ class AppServiceProvider extends ServiceProvider
             Css::make('stylesheet', asset('leaflet.css')),
             Js::make('script', asset('leaflet.js')),
             Js::make('script', asset('html2canvas.min.js')),
+            JS::make('script', asset('recta/recta.js')),
+            JS::make('script', asset('print.js')),
         ]);
 
         FilamentView::registerRenderHook(
